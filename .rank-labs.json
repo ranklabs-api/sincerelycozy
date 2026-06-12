@@ -1,0 +1,16 @@
+{
+  "customer_id": "sincerelycozy",
+  "business_name": "Sincerely Cozy",
+  "site_url": "https://sincerelycozy.com",
+  "contact_name": "Josiah",
+  "contact_email": "josiahearl@gmail.com",
+  "plan": "internal",
+  "plan_features": [
+    "seo_audit"
+  ],
+  "cf_project": "sincerelycozy",
+  "github_repo": "ranklabs-api/sincerelycozy",
+  "type": "cloudflare-pages",
+  "provisioning_state": "migrating",
+  "ga4_property_id": "properties/539496646"
+}
