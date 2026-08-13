@@ -12,6 +12,9 @@ jobs:
       deployments: write
     steps:
       - uses: actions/checkout@v4
+      - name: Block indexing on non-production branches
+        if: github.ref_name != 'main'
+        run: printf '/*\n  X-Robots-Tag: noindex\n' >> _headers
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
