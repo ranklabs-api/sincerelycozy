@@ -2,7 +2,7 @@ name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches: [main, draft]
+    branches: [main, draft, 'content/**']
 
 jobs:
   deploy:
