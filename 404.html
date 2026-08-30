@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!-- 404 page. Cloudflare Pages serves this with a real HTTP 404 for unknown
+     URLs. Without it, Pages falls back to index.html with HTTP 200 — a soft
+     404, which shows Google unlimited duplicate copies of the homepage. -->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>Page Not Found | Sincerely Cozy</title>
+<meta name="description" content="That page could not be found. Browse our bamboo swaddles, care instructions, or FAQ." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+       background:#fdf8f4;font-family:'Nunito',system-ui,sans-serif;color:#4a3f39;padding:24px;}
+  .wrap{max-width:560px;text-align:center;}
+  .eyebrow{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#b09a8a;margin-bottom:12px;}
+  h1{font-family:'Baloo 2',cursive;font-size:36px;margin:0 0 16px;color:#7a5c48;}
+  p{font-size:17px;line-height:1.6;color:#6b5c52;margin:0 0 28px;}
+  a.btn{display:inline-block;margin:6px;padding:11px 22px;border-radius:999px;
+        background:#e8c9b0;color:#4a3f39;text-decoration:none;font-weight:700;font-size:15px;}
+  a.btn.alt{background:transparent;border:2px solid #e8c9b0;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">Error 404</div>
+    <h1>We couldn't find that page</h1>
+    <p>The page you're looking for may have moved or no longer exists. Here's where most people go next:</p>
+    <a class="btn" href="/index.html">Home</a>
+    <a class="btn alt" href="/faq.html">FAQ</a>
+    <a class="btn alt" href="/care-instructions.html">Care Instructions</a>
+  </div>
+</body>
+</html>
