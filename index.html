@@ -25,10 +25,49 @@
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "Organization",
+      "@type": ["OnlineStore", "Organization"],
+      "@id": "https://sincerelycozy.com/#organization",
       "name": "Sincerely Cozy",
       "url": "https://sincerelycozy.com",
-      "description": "Luxury bamboo swaddles for dreamy naps and adorable moments."
+      "logo": "https://sincerelycozy.com/assets/logos/sincerely-cozy-logo.png",
+      "image": "https://sincerelycozy.com/assets/og-image.jpg",
+      "description": "Luxury bamboo baby swaddles for dreamy naps and adorable moments. Soft, breathable, hypoallergenic, and designed for comfort.",
+      "email": "customerservice@sincerelycozy.com",
+      "telephone": "+19133787608",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "11454 Chateaubriand Ave",
+        "addressLocality": "Orlando",
+        "addressRegion": "FL",
+        "postalCode": "32836",
+        "addressCountry": "US"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 28.4308339,
+        "longitude": -81.5555657
+      },
+      "sameAs": [
+        "https://www.instagram.com/sincerely_cozy/",
+        "https://www.facebook.com/SincereyCozy",
+        "https://www.amazon.com/stores/SINCERELYCOZY/page/BBEF32A4-0E55-4F29-87EA-2D53DAE16FC8"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer service",
+        "email": "customerservice@sincerelycozy.com",
+        "telephone": "+19133787608",
+        "availableLanguage": "en"
+      },
+      "potentialAction": {
+        "@type": "BuyAction",
+        "name": "Shop Sincerely Cozy",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://www.amazon.com/stores/SINCERELYCOZY/page/BBEF32A4-0E55-4F29-87EA-2D53DAE16FC8",
+          "actionPlatform": "https://schema.org/DesktopWebPlatform"
+        }
+      }
     }
   </script>
   <meta name="description" content="Sincerely Cozy luxury bamboo swaddles for dreamy naps and adorable moments." />
