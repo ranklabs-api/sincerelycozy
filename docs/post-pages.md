@@ -1,6 +1,6 @@
 # Journal post layout follow-up
 
-The user visually accepted the index at 1440px and 390px. This follow-up leaves blog/index.html, journal.css and shared styles.css unchanged.
+The user visually accepted the index at 1440px and 390px. This follow-up leaves blog/index.html and shared styles.css unchanged. journal.css gets one narrow accessibility adjustment: main-navigation links now have a minimum width of 44px as well as a minimum height, including the short Blog label.
 
 ## Changes
 
@@ -19,7 +19,7 @@ The template and CSS are site-owned files committed in this site branch. Integra
 - 20/20 article elements byte-identical to the pre-backfill files.
 - 20/20 retain metadata, JSON-LD and publication dates; exactly one H1 and one main each.
 - 20/20 have header, navigation, footer; stylesheet and local chrome links resolve.
-- Accepted index, journal.css and shared styles.css byte-identical.
+- Accepted index HTML and shared styles.css byte-identical; journal.css only adds a 44px minimum navigation-link width.
 - 18 publisher and publish-failure-recovery tests pass, including site-template metadata/body preservation, missing-template fallback, malformed-template rejection and literal-token handling.
 - Actual publisher function rendered the actual site template into /tmp/cozy-design/generated-post.html (temporary, not published).
 - Actual card insertion simulation still passes; 21 cards inside the index grid and repeat-insertion dedupe preserved.

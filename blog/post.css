@@ -44,4 +44,4 @@
   .post-next > a > span { font-size: 24px; }
 }
 /* Inline article links also offer a full-height touch target. */
-.cozy-post .post-reading a { display: inline-block; min-height: 44px; max-width: 100%; padding: 6px 2px; vertical-align: baseline; }
+.cozy-post .post-reading a { display: inline-block; min-width: 44px; min-height: 44px; max-width: 100%; padding: 6px 2px; vertical-align: baseline; }

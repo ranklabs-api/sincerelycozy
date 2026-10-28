@@ -16,7 +16,7 @@
 .cozy-journal .site-header { border-bottom: 1px solid var(--journal-line); padding: 16px 0; }
 .cozy-journal .brand { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; }
 .cozy-journal .site-nav { font-size: 13px; font-weight: 400; gap: 28px; color: var(--journal-ink); }
-.cozy-journal .site-nav a { min-height: 44px; display: flex; align-items: center; }
+.cozy-journal .site-nav a { min-width: 44px; min-height: 44px; display: flex; align-items: center; }
 .cozy-journal .site-nav [aria-current] { text-decoration: underline; text-underline-offset: 6px; }
 .cozy-journal .btn { background: #454157; border-radius: 4px; font-size: 13px; font-weight: 400; min-height: 44px; display: inline-flex; align-items: center; }
 .journal-intro { padding: 55px 0 42px; text-align: center; }
