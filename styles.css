@@ -91,14 +91,25 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
 .article-sources { margin-top: 1.2rem; padding-top: .8rem; border-top: 1px dashed rgba(157,168,205,.5); display: grid; gap: .35rem; }
 .article-sources a { color: var(--ink); font-weight: 700; }
 
+/* Reviews */
+.reviews-section { margin-top: 3.4rem; }
+.reviews-note { color: var(--ink-soft); max-width: 70ch; margin: .6rem 0 0; }
+.reviews-note a { color: var(--ink); font-weight: 800; text-decoration: underline; }
+.reviews-grid { margin-top: 1rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .95rem; }
+.review-card { background: var(--card); border: 1px solid rgba(157,168,205,.28); border-radius: 18px; padding: 1rem; box-shadow: var(--shadow); }
+.review-stars { margin: 0 0 .3rem; color: #a06b9a; letter-spacing: .1em; font-size: 1.05rem; }
+.review-card blockquote { margin: .5rem 0; }
+.review-card blockquote p { margin: 0; color: var(--ink-soft); line-height: 1.6; }
+.review-meta { margin: .6rem 0 0; font-size: .88rem; color: var(--ink-soft); }
+
 @media (max-width: 980px) {
-  .hero, .swaddle-grid, .blog-banners, .site-footer, .value-strip, .why-grid, .steps-grid, .story-contact, .mom-banner { grid-template-columns: 1fr 1fr; }
+  .hero, .swaddle-grid, .reviews-grid, .blog-banners, .site-footer, .value-strip, .why-grid, .steps-grid, .story-contact, .mom-banner { grid-template-columns: 1fr 1fr; }
   .site-header { flex-wrap: wrap; }
   .site-nav { width: 100%; order: 3; justify-content: center; }
   .blog-card { grid-template-columns: 1fr; }
 }
 @media (max-width: 680px) {
-  .hero, .swaddle-grid, .blog-banners, .site-footer, .value-strip, .why-grid, .steps-grid, .story-contact, .mom-banner { grid-template-columns: 1fr; }
+  .hero, .swaddle-grid, .reviews-grid, .blog-banners, .site-footer, .value-strip, .why-grid, .steps-grid, .story-contact, .mom-banner { grid-template-columns: 1fr; }
   .site-header, main, .site-footer { width: min(1140px, calc(100% - 1.15rem)); }
   .site-nav { justify-content: flex-start; overflow: auto; white-space: nowrap; }
 }
