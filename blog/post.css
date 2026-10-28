@@ -1,0 +1,47 @@
+/* Journal post presentation. Loaded only by the site-owned post template. */
+.cozy-post { --muted: #626272; }
+.cozy-post .post-main { margin-top: 0; }
+.post-breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--journal-line); font-size: 12px; color: var(--journal-muted); }
+.post-breadcrumb a { display: inline-flex; align-items: center; min-height: 44px; color: var(--journal-ink); }
+.post-breadcrumb a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.post-reading { max-width: 70ch; margin: 48px auto 56px; font-size: 17px; line-height: 1.8; overflow-wrap: anywhere; }
+.cozy-post .post-reading article { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; overflow: visible; }
+.cozy-post .post-reading h1 { font: 400 clamp(32px, 3.3vw, 48px)/1.15 Georgia, 'Times New Roman', serif; letter-spacing: -.035em; color: var(--journal-ink); margin: 0 0 22px; text-wrap: pretty; }
+.cozy-post .post-reading h2 { font: 400 30px/1.25 Georgia, 'Times New Roman', serif; letter-spacing: -.02em; margin: 40px 0 16px; color: var(--journal-ink); }
+.cozy-post .post-reading h3 { font: 400 24px/1.3 Georgia, 'Times New Roman', serif; margin: 30px 0 12px; color: var(--journal-ink); }
+.cozy-post .post-reading p { margin: 0 0 22px; color: #50505c; font-size: inherit; line-height: inherit; }
+.cozy-post .post-reading p:has(> time) { margin: 0 0 30px; padding-bottom: 24px; border-bottom: 1px solid var(--journal-line); letter-spacing: .02em; }
+.cozy-post .post-reading a { color: #665078; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.cozy-post .post-reading a:hover { color: #393044; }
+.cozy-post .post-reading ul, .cozy-post .post-reading ol { padding-left: 24px; margin: 0 0 24px; }
+.cozy-post .post-reading li { margin: 0 0 12px; color: #50505c; line-height: 1.8; }
+.cozy-post .post-reading blockquote { margin: 28px 0; padding: 20px 24px; border-left: 3px solid #aa96b5; background: #eee9f1; }
+.cozy-post .post-reading blockquote p:last-child { margin-bottom: 0; }
+.cozy-post .post-reading img { width: 100%; height: auto; border-radius: 5px; margin: 28px 0; }
+.cozy-post .post-reading .article-hero { max-height: 260px; object-fit: cover; margin: 0 0 32px; }
+.cozy-post .post-reading :is(.article-head, .article-body) { padding: 0; max-width: none; }
+.cozy-post .post-reading .tag { font: 600 10px/1.5 Arial, Helvetica, sans-serif; letter-spacing: .14em; color: #665078; margin-bottom: 16px; }
+.cozy-post .post-reading .article-sources a { display: flex; align-items: center; min-height: 44px; }
+.cozy-post .post-reading hr { border: 0; border-top: 1px solid var(--journal-line); margin: 32px 0; }
+.cozy-post .post-reading table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+.cozy-post .post-reading :is(th, td) { padding: 12px; border: 1px solid var(--journal-line); text-align: left; }
+.cozy-post .post-reading pre { max-width: 100%; overflow: auto; }
+.post-next { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--journal-line); border-radius: 5px; background: #eee9f1; }
+.post-next > a { display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 28px 32px; min-height: 100px; }
+.post-next > a + a { border-left: 1px solid var(--journal-line); }
+.post-next small { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #626272; }
+.post-next > a > span { font: 400 26px/1.3 Georgia, 'Times New Roman', serif; display: flex; justify-content: space-between; gap: 12px; }
+.post-next > a:hover { background: #e4dce9; }
+@media (max-width: 680px) {
+  .post-breadcrumb { gap: 8px; padding: 10px 0; font-size: 11px; }
+  .post-reading { margin: 30px auto 40px; font-size: 16px; line-height: 1.8; }
+  .cozy-post .post-reading h1 { font-size: 34px; }
+  .cozy-post .post-reading h2 { font-size: 27px; margin-top: 32px; }
+  .cozy-post .post-reading h3 { font-size: 23px; }
+  .post-next { grid-template-columns: minmax(0, 1fr); }
+  .post-next > a { padding: 24px; }
+  .post-next > a + a { border-left: 0; border-top: 1px solid var(--journal-line); }
+  .post-next > a > span { font-size: 24px; }
+}
+/* Inline article links also offer a full-height touch target. */
+.cozy-post .post-reading a { display: inline-block; min-width: 44px; min-height: 44px; max-width: 100%; padding: 6px 2px; vertical-align: baseline; }
