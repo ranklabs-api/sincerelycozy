@@ -66,16 +66,27 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
 .page-content { margin-top: .9rem; background: #fff; border: 1px solid rgba(157,168,205,.24); border-radius: 18px; padding: 1rem; }
 
 /* Blog Hub */
-.blog-hero { margin-top: .8rem; background: #fff; border: 1px solid rgba(157,168,205,.25); border-radius: 24px; padding: 1.1rem; }
-.blog-hero h1 { margin-top: .35rem; }
-.blog-hero p { color: var(--ink-soft); }
-.blog-grid { margin-top: 1rem; display: grid; grid-template-columns: 1fr; gap: .9rem; }
-.blog-card { display: grid; grid-template-columns: 320px 1fr; gap: 1rem; background: #fff; border: 1px solid rgba(157,168,205,.24); border-radius: 20px; overflow: hidden; }
-.blog-card img { width: 100%; height: 100%; min-height: 220px; object-fit: cover; }
-.blog-card div { padding: 1rem .95rem; }
-.blog-card h2 { margin: .35rem 0 .5rem; }
-.blog-card p { color: var(--ink-soft); }
+.blog-hero { margin-top: .8rem; display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: clamp(1rem, 3vw, 2.2rem); background: linear-gradient(140deg, #fff 0%, #faf5eb 100%); border: 1px solid rgba(157,168,205,.25); border-radius: 36px; padding: clamp(1.15rem, 3vw, 2.2rem); }
+.blog-hero h1 { margin: .4rem 0 .8rem; font-size: clamp(1.9rem, 3.8vw, 3.1rem); }
+.blog-hero p { color: var(--ink-soft); font-size: 1.03rem; line-height: 1.65; max-width: 44ch; margin: 0; }
+.blog-hero-media img { width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 26px; box-shadow: var(--shadow); }
+.blog-grid { margin-top: clamp(1.2rem, 3vw, 2rem); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(.85rem, 1.6vw, 1.1rem); }
+.blog-card { position: relative; display: flex; flex-direction: column; gap: .5rem; background: var(--card); border: 1px solid rgba(157,168,205,.24); border-radius: var(--radius); padding: clamp(1.2rem, 2.2vw, 1.55rem); box-shadow: 0 6px 18px rgba(101,112,154,.07); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+.blog-card::before { content: ""; position: absolute; top: 0; left: clamp(1.2rem, 2.2vw, 1.55rem); width: 38px; height: 3px; border-radius: 0 0 3px 3px; background: linear-gradient(90deg, var(--pink), var(--sky)); }
+.blog-card-title { margin: 0; font-size: clamp(1.08rem, 1.45vw, 1.26rem); line-height: 1.3; color: var(--ink); }
+.blog-card-title a { display: block; }
+.blog-card-title a::after { content: ""; position: absolute; inset: 0; }
+.blog-card-excerpt { margin: 0; color: var(--ink-soft); font-size: .97rem; line-height: 1.65; max-width: 68ch; }
+.blog-card::after { content: "Read article \2192"; margin-top: auto; padding-top: .9rem; font-size: .74rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #a06b9a; transition: color .22s ease; }
+.blog-card:hover { transform: translateY(-3px); border-color: rgba(217,161,205,.6); box-shadow: var(--shadow); }
+.blog-card:hover::after { color: var(--ink); }
+.blog-card:focus-within { outline: 3px solid rgba(157,168,205,.8); outline-offset: 3px; }
 .text-link { color: var(--ink); font-weight: 800; }
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-card { transition: none; }
+  .blog-card:hover { transform: none; }
+}
 
 /* Article */
 .article-shell { margin-top: .8rem; background: #fff; border: 1px solid rgba(157,168,205,.24); border-radius: 24px; overflow: hidden; }
@@ -122,11 +133,15 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
   .hero, .swaddle-grid, .reviews-grid, .blog-banners, .site-footer, .value-strip, .why-grid, .steps-grid, .story-contact, .mom-banner { grid-template-columns: 1fr 1fr; }
   .site-header { flex-wrap: wrap; }
   .site-nav { width: 100%; order: 3; justify-content: center; }
-  .blog-card { grid-template-columns: 1fr; }
+  .blog-hero, .blog-grid { grid-template-columns: 1fr; }
+  .blog-hero-media img { aspect-ratio: 5 / 2; }
   .product-detail { grid-template-columns: 1fr; }
 }
 @media (max-width: 680px) {
   .hero, .swaddle-grid, .reviews-grid, .blog-banners, .site-footer, .value-strip, .why-grid, .steps-grid, .story-contact, .mom-banner { grid-template-columns: 1fr; }
-  .site-header, main, .site-footer { width: min(1140px, calc(100% - 1.15rem)); }
   .site-nav { justify-content: flex-start; overflow: auto; white-space: nowrap; }
+  .blog-hero-media img { aspect-ratio: 16 / 10; }
+  .site-header .brand { font-size: 1.15rem; }
+  .site-header .brand img { width: 44px; height: 44px; }
+  .site-header .btn { padding: .6rem .95rem; font-size: .92rem; }
 }
