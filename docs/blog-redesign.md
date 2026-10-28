@@ -1,6 +1,6 @@
 # Cozy Journal redesign — draft review
 
-Status: implementation and static checks complete; visual research and visual acceptance BLOCKED by browser availability. Do not treat this as visually approved or deploy it yet.
+Status: index visually accepted by the user at 1440px and 390px on 2026-10-28, with 20 cards, one H1 and no horizontal overflow. The post-page follow-up is implemented and statically checked; its visual acceptance remains pending (see post-pages.md). Reference-site visual measurements remain unverified.
 
 ## Design
 
@@ -39,7 +39,7 @@ Executed the actual insertIntoBlogIndex function from ranklabs-app in a VM with 
 - styles.css and all six required regression pages are byte-identical to the original commit.
 - No page content depends on JavaScript.
 
-## Pending visual acceptance
+## Original visual acceptance checklist (index now accepted by user)
 
 At 1440px and 390px, capture and inspect the blog, homepage, products index, baby-blue product page, FAQ, care instructions and how-to-swaddle-a-baby post. Check horizontal overflow and focus/tap targets. Render the future-publish fixture at both sizes and compare it with neighbours. Then finish the five reference-site visual observations above. A prepared Playwright script exists at /tmp/cozy-design/verify-visual.cjs; no screenshots were produced because Chrome could not launch.
 
