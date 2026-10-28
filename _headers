@@ -1,0 +1,12 @@
+# Cloudflare Pages serves static assets with max-age=14400 by default, so a
+# stylesheet change took up to four hours to reach a returning visitor. HTML
+# is already served max-age=0, which means a CSS change shipped new markup to
+# browsers still holding the old stylesheet -- the blog index rendered with
+# its previous grid rules and looked broken, which is exactly what happened
+# on 2026-10-28.
+#
+# styles.css is a single hand-maintained file with no content hash in its
+# name, so it cannot be cached by version. Revalidate it instead: the ETag
+# makes the usual case a 304 with no body, which is cheap.
+/styles.css
+  Cache-Control: public, max-age=0, must-revalidate
