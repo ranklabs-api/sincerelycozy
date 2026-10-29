@@ -162,13 +162,8 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
 .banner-copy p:not(.tag) { max-width: 43ch; font-size: 1.1rem; line-height: 1.65; }
 .carousel-controls { display: flex; justify-content: center; align-items: center; gap: 1.25rem; padding: .85rem 1rem; background: var(--bg); }
 .carousel-controls button { font: inherit; font-weight: 800; color: var(--ink); background: white; border: 1px solid var(--ink); border-radius: 999px; min-height: 44px; min-width: 44px; cursor: pointer; }
-.carousel-toggle { padding: .5rem 1rem; }
 .carousel-dots { display: flex; gap: .5rem; }
 .carousel-dots button[aria-current] { background: var(--ink); color: white; }
-.multifunction-grid { list-style: none; padding: 0; margin: 1.5rem 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; }
-.multifunction-grid li { display: grid; place-items: center; min-height: 92px; padding: 1rem; border: 1px solid rgba(157,168,205,.45); border-radius: 18px; background: var(--card); text-align: center; font-weight: 800; }
-.multifunction-grid li:nth-child(3n + 2) { background: #f7eef5; }
-.multifunction-grid a { text-decoration: underline; text-underline-offset: 4px; }
 .featured-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .featured-grid img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius); }
 .home-banner { margin-top: 1rem; }
@@ -180,8 +175,34 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
   .carousel-slide::before, .home-banner::before { display: none; }
   .banner-copy { width: 100%; padding: 1.5rem; background: var(--bg); }
   .carousel-slide .banner-copy { min-height: 360px; }
-  .multifunction-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .featured-grid { grid-template-columns: 1fr; }
   .featured-grid img { aspect-ratio: 4 / 3; }
   .home-main .reviews-grid { grid-template-columns: 1fr; }
+}
+
+/* Preview: banner fades, rotating use photos, and the ways-to-use hub. */
+.carousel-slides { display: grid; }
+.carousel-slide { grid-area: 1 / 1; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .8s ease, visibility .8s; }
+.carousel-slide.is-active { opacity: 1; visibility: visible; pointer-events: auto; }
+.multifunction-layout { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 4vw, 3rem); align-items: center; margin-top: 1.5rem; }
+.multifunction-photos { display: grid; overflow: hidden; border-radius: var(--radius); background: var(--cream); }
+.rotation-photo { grid-area: 1 / 1; width: 100%; aspect-ratio: 1; object-fit: contain; opacity: 0; visibility: hidden; transition: opacity .8s ease, visibility .8s; }
+.rotation-photo.is-active { opacity: 1; visibility: visible; }
+.multifunction-list { list-style: none; padding: 0; margin: 0 0 1.25rem; display: grid; gap: .25rem; }
+.multifunction-list li { padding: .45rem .8rem; border-left: 3px solid transparent; border-radius: 0 12px 12px 0; font-weight: 700; }
+.multifunction-list li.is-active { background: #f7eef5; border-left-color: #a06b9a; }
+.multifunction-copy .text-link { display: inline-block; text-decoration: underline; text-underline-offset: 4px; }
+.versatility-block { margin-top: 1.5rem; padding: clamp(1rem, 3vw, 2rem); background: var(--card); border: 1px solid rgba(157,168,205,.28); border-radius: var(--radius); }
+.versatility-block h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); margin-bottom: 1rem; }
+.versatility-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.versatility-gallery img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: contain; background: var(--bg); border-radius: 16px; }
+.versatility-block p { color: var(--ink-soft); line-height: 1.6; }
+.versatility-block .btn { display: inline-block; margin-top: .25rem; }
+.photo-placeholder { display: grid; place-items: center; min-height: 180px; padding: 1rem; border: 1px dashed var(--sky); border-radius: 16px; background: var(--bg); color: var(--ink-soft); }
+@media (max-width: 768px) {
+  .multifunction-layout, .versatility-gallery { grid-template-columns: 1fr; }
+  .carousel-slide .banner-copy { min-height: 270px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carousel-slide, .rotation-photo { transition: none; }
 }
