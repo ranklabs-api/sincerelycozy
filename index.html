@@ -25,7 +25,7 @@
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": ["OnlineStore", "Organization"],
+      "@type": "Organization",
       "@id": "https://sincerelycozy.com/#organization",
       "name": "Sincerely Cozy",
       "url": "https://sincerelycozy.com",
@@ -81,7 +81,7 @@
       <span>Sincerely Cozy</span>
     </a>
     <nav class="site-nav">
-      <a href="#swaddles">Swaddles</a>
+      <a href="/swaddles">Swaddles</a>
       <a href="/swaddles">Products</a>
       <a href="#why">Why Us</a>
       <a href="blog/index.html">Blog</a>
@@ -90,59 +90,52 @@
     <a class="btn" href="https://www.amazon.com/stores/SINCERELYCOZY/page/BBEF32A4-0E55-4F29-87EA-2D53DAE16FC8" target="_blank" rel="noopener noreferrer">Shop Amazon</a>
   </header>
 
-  <main>
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="tag">Thoughtfully Made for Tiny Dreamers</p>
-        <h1>Buttery-soft bamboo swaddles for sweet little dreamers.</h1>
-        <p>Hypoallergenic, breathable, and made for everyday cuddles, naps, stroller rides, and newborn photos.</p>
-        <div class="hero-actions">
-          <a class="btn" href="/swaddles">See All 6 Prints</a>
-          <a class="btn btn-outline" href="#mom">From a Mom to Another</a>
+  <main class="home-main">
+    <!-- 1. Banners -->
+    <section class="home-carousel" id="banners" aria-label="Bamboo swaddle highlights" aria-roledescription="carousel">
+      <div class="carousel-slides" aria-live="off">
+        <div class="carousel-slide" id="slide-1" role="group" aria-roledescription="slide" aria-label="1 of 3">
+          <img src="assets/images/hero-banner.jpg" alt="Sincerely Cozy bamboo swaddles" fetchpriority="high" />
+          <div class="banner-copy"><p class="tag">Sincerely Cozy</p><h1>Luxury Bamboo Swaddle</h1><a class="btn" href="/swaddles">Shop swaddles</a></div>
+        </div>
+        <div class="carousel-slide" id="slide-2" role="group" aria-roledescription="slide" aria-label="2 of 3" hidden>
+          <img src="assets/images/hero-secondary.jpg" alt="Baby in a Rose Petal swaddle" />
+          <div class="banner-copy"><h2>Safe, adorable and dreamy</h2><p>The coziest and softest swaddle</p><p>Anti-bacterial, hypoallergenic and breathable</p><a class="btn" href="/swaddles">Find your cozy</a></div>
+        </div>
+        <div class="carousel-slide" id="slide-3" role="group" aria-roledescription="slide" aria-label="3 of 3" hidden>
+          <img src="assets/images/featured-3.jpg" alt="A cozy moment with Sincerely Cozy" />
+          <div class="banner-copy"><h2>Fashion adapted for tiny, delicate &amp; angelic humans</h2><p>The swaddles that guarantees an &quot;aweeee&quot;</p><a class="btn" href="/swaddles">Explore swaddles</a></div>
         </div>
       </div>
-      <div class="hero-image-wrap">
-        <img src="assets/images/hero-secondary.jpg" alt="Baby in Rose Petal swaddle" class="hero-image" />
-      </div>
-      <div class="blob blob-a"></div>
-      <div class="blob blob-b"></div>
-    </section>
-
-    <section class="value-strip">
-      <div>95% Bamboo Rayon</div>
-      <div>Breathable + Lightweight</div>
-      <div>Stretchy, Easy Wrap</div>
-      <div>Soft After Washes</div>
-    </section>
-
-    <section class="swaddle-showcase" id="swaddles">
-      <div class="section-head">
-        <p class="tag">Signature Collection</p>
-        <h2>Choose your cozy style</h2>
-      </div>
-      <div class="swaddle-grid">
-        <article class="swaddle-card"><a class="card-link" href="/swaddles/baby-blue"><img src="assets/images/swaddle-baby-blue.jpg" alt="Baby Blue swaddle" /><h3>Baby Blue</h3></a><a href="https://www.amazon.com/dp/B08N1L9C2B" target="_blank" rel="noopener noreferrer">Shop on Amazon</a></article>
-        <article class="swaddle-card"><a class="card-link" href="/swaddles/cozy-teddy-bear"><img src="assets/images/swaddle-cozy-teddy-bear.jpg" alt="Cozy Teddy Bear swaddle" /><h3>Cozy Teddy Bear</h3></a><a href="https://www.amazon.com/dp/B08N2P5KR8" target="_blank" rel="noopener noreferrer">Shop on Amazon</a></article>
-        <article class="swaddle-card"><a class="card-link" href="/swaddles/dreamy-clouds"><img src="assets/images/swaddle-dreamy-clouds.jpg" alt="Dreamy Clouds swaddle" /><h3>Dreamy Clouds</h3></a><a href="https://www.amazon.com/dp/B08N2HPPVY" target="_blank" rel="noopener noreferrer">Shop on Amazon</a></article>
-        <article class="swaddle-card"><a class="card-link" href="/swaddles/little-butterfly"><img src="assets/images/swaddle-little-butterfly.jpg" alt="Little Butterfly swaddle" /><h3>Little Butterfly</h3></a><a href="https://www.amazon.com/dp/B08PQ72WFD" target="_blank" rel="noopener noreferrer">Shop on Amazon</a></article>
-        <article class="swaddle-card"><a class="card-link" href="/swaddles/pickaboo-bear"><img src="assets/images/swaddle-pickaboo-bear.jpg" alt="Pickaboo Bear swaddle" /><h3>Pickaboo Bear</h3></a><a href="https://www.amazon.com/dp/B08N1LWVYJ" target="_blank" rel="noopener noreferrer">Shop on Amazon</a></article>
-        <article class="swaddle-card"><a class="card-link" href="/swaddles/rose-petal"><img src="assets/images/swaddle-rose-petal.jpg" alt="Rose Petal swaddle" /><h3>Rose Petal</h3></a><a href="https://www.amazon.com/dp/B08N2T6RCQ" target="_blank" rel="noopener noreferrer">Shop on Amazon</a></article>
+      <div class="carousel-controls" hidden>
+        <button type="button" class="carousel-toggle">Pause slides</button>
+        <div class="carousel-dots" aria-label="Choose a slide">
+          <button type="button" aria-label="Show slide 1" aria-controls="slide-1" aria-current="true">1</button>
+          <button type="button" aria-label="Show slide 2" aria-controls="slide-2">2</button>
+          <button type="button" aria-label="Show slide 3" aria-controls="slide-3">3</button>
+        </div>
       </div>
     </section>
 
-    <section class="why-section" id="why">
-      <div class="section-head">
-        <p class="tag">Why Parents Choose Us</p>
-        <h2>Built for better sleep and easier days</h2>
-      </div>
-      <div class="why-grid">
-        <article><h3>Cozy Sleep Routine</h3><p>A snug, soft wrap helps babies settle and sleep more peacefully.</p></article>
-        <article><h3>Temperature Comfort</h3><p>Breathable bamboo helps keep your little one comfy all year.</p></article>
-        <article><h3>Made to Last</h3><p>Strong stitching and quality fabric stay soft after repeated washes.</p></article>
-        <article><h3>One Blanket, Many Uses</h3><p>Swaddle, nursing cover, stroller canopy, burp cloth, and tummy time blanket.</p></article>
+    <!-- 2. Multi-functional nursery essential -->
+    <section class="home-section multifunction-section" id="multifunction" aria-labelledby="multifunction-title">
+      <div class="section-head"><p class="tag">One blanket, so many moments</p><h2 id="multifunction-title">The cutest essential &amp; multi-functional nursery piece</h2></div>
+      <ul class="multifunction-grid">
+        <li>Swaddle</li><li>Nursing cover</li><li>Swaddle bath</li><li>Burp cloth</li><li>Receiving blanket</li><li>Stroller canopy</li><li>Changing blanket</li><li>Tummy time blanket</li><li><a href="blog/swaddle-blanket-uses.html">and much more →</a></li>
+      </ul>
+    </section>
+
+    <!-- 3. Featured photos -->
+    <section class="home-section" id="featured" aria-labelledby="featured-title">
+      <div class="section-head"><p class="tag">Little moments, wrapped in cozy</p><h2 id="featured-title">Featured photos</h2></div>
+      <div class="featured-grid">
+        <img src="assets/images/featured-1.jpg" alt="Baby wrapped in a bear-print swaddle" loading="lazy" />
+        <img src="assets/images/featured-2.jpg" alt="Baby wrapped in a blue swaddle with a matching hat" loading="lazy" />
+        <img src="assets/images/featured-3.jpg" alt="Baby wrapped in a floral swaddle with a matching bow" loading="lazy" />
       </div>
     </section>
 
+    <!-- 4. Reviews -->
     <section class="reviews-section" id="reviews">
       <!-- Third-party Amazon reviews, shown as visible attributed text only.
            DO NOT add aggregateRating, Review, or any ratings JSON-LD for these:
@@ -193,49 +186,70 @@
       </div>
     </section>
 
-    <section class="mom-banner" id="mom">
-      <div class="mom-photo">
-        <img src="assets/images/founder.jpg" alt="Palloma Earl, founder of Sincerely Cozy" />
-      </div>
-      <div class="mom-copy">
-        <p class="tag">From a Mom to Another</p>
-        <h2>Hi, I’m Palloma. I created Sincerely Cozy after struggling to find swaddles that were both easy to use and genuinely soft.</h2>
-        <p>I wanted safer-feeling comfort, timeless prints, and practical quality for real newborn life. Every swaddle is designed with that mission in mind: help parents feel confident and help babies feel cozy.</p>
-      </div>
+    <!-- 5. Swaddling benefits -->
+    <section class="home-banner" id="benefits" aria-labelledby="benefits-title">
+      <img src="assets/images/benefits-banner.jpg" alt="" loading="lazy" />
+      <div class="banner-copy"><p class="tag">The cozy journal</p><h2 id="benefits-title">The Benefits of swaddling your baby</h2><a class="btn" href="blog/swaddling-benefits.html">Explore the benefits</a></div>
     </section>
 
-    <section class="steps-section">
-      <div class="section-head">
-        <p class="tag">Simple Swaddling</p>
-        <h2>From unwrap to asleep in 3 steps</h2>
-      </div>
-      <div class="steps-grid">
-        <div><span>01</span><h3>Lay & Fold</h3><p>Lay blanket flat with a top corner folded down.</p></div>
-        <div><span>02</span><h3>Secure Arms</h3><p>Wrap one side snugly across baby and tuck beneath.</p></div>
-        <div><span>03</span><h3>Wrap & Settle</h3><p>Bring lower corner up, then final side across for a cozy finish.</p></div>
-      </div>
+    <!-- 6. Why bamboo -->
+    <section class="home-banner" id="why" aria-labelledby="why-title">
+      <img src="assets/images/why-banner.jpg" alt="" loading="lazy" />
+      <div class="banner-copy"><p class="tag">Softness with a purpose</p><h2 id="why-title">Why Sincerely Cozy Bamboo swaddles are your best choice</h2><a class="btn" href="blog/why-bamboo.html">Discover why bamboo</a></div>
     </section>
 
-    <section class="story-contact" id="contact">
-      <article class="contact-card contact-wide">
-        <p class="tag">Need Help?</p>
-        <h2>Message us on Instagram</h2>
-        <p>For product questions, fit help, or order support, send us a DM and our team will help you quickly.</p>
-        <a target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/sincerely_cozy/">@sincerely_cozy on Instagram</a>
-      </article>
+    <!-- 7. Gifts -->
+    <section class="home-banner" id="gifts" aria-labelledby="gifts-title">
+      <img src="assets/images/gift-banner.jpg" alt="" loading="lazy" />
+      <div class="banner-copy"><p class="tag">Give a little cozy</p><h2 id="gifts-title">The best gift idea for moms-to-be &amp; newborns.</h2><a class="btn" href="/gifts">Find a thoughtful gift</a></div>
     </section>
 
-    <section class="blog-banners">
-      <article style="background-image:url('assets/images/benefits-banner.jpg')"><div><h3>The Benefits of Swaddling</h3><a href="blog/swaddling-benefits.html">Read More</a></div></article>
-      <article style="background-image:url('assets/images/why-banner.jpg')"><div><h3>Why Bamboo?</h3><a href="blog/why-bamboo.html">Read More</a></div></article>
-      <article style="background-image:url('assets/images/gift-banner.jpg')"><div><h3>Transitioning From Swaddling</h3><a href="blog/swaddle-transition.html">Read More</a></div></article>
+    <!-- 8. From a mom to another -->
+    <section class="home-banner founder-banner" id="mom" aria-labelledby="mom-title">
+      <img src="assets/images/founder.jpg" alt="Palloma Earl, founder of Sincerely Cozy" loading="lazy" />
+      <div class="banner-copy"><p class="tag">Meet Palloma</p><h2 id="mom-title">From a mom to another</h2><p>Hi, I’m Palloma. I created Sincerely Cozy after struggling to find swaddles that were both easy to use and genuinely soft.</p><a class="btn" href="/about">Read our story</a></div>
     </section>
-  </main>
-
-  <footer class="site-footer">
+  </main>  <footer class="site-footer" id="contact">
     <div><h4>Swaddles</h4><a href="/swaddles">Shop All 6 Styles</a><a href="https://www.amazon.com/stores/SINCERELYCOZY/page/BBEF32A4-0E55-4F29-87EA-2D53DAE16FC8" target="_blank" rel="noopener noreferrer">Amazon Storefront</a></div>
     <div><h4>Learn</h4><a href="#why">Why Sincerely Cozy</a><a href="blog/index.html">Blog</a><a href="faq.html">FAQ</a><a href="/care">Care Instructions</a></div>
-    <div><h4>Community</h4><a target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/sincerely_cozy/">Instagram Messages</a><a href="tel:+19133787608">913-378-7608</a><p>customerservice@sincerelycozy.com</p></div>
+    <div><h4>Community</h4><a target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/sincerely_cozy/">Instagram Messages</a><a href="tel:+19133787608">913-378-7608</a><a href="mailto:customerservice@sincerelycozy.com">customerservice@sincerelycozy.com</a></div>
   </footer>
+  <script>
+    (() => {
+      const carousel = document.querySelector('.home-carousel');
+      const slides = [...carousel.querySelectorAll('.carousel-slide')];
+      const dots = [...carousel.querySelectorAll('.carousel-dots button')];
+      const toggle = carousel.querySelector('.carousel-toggle');
+      const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let current = 0;
+      let paused = motion.matches;
+      let hovered = false;
+      let timer;
+      function schedule() {
+        clearInterval(timer);
+        carousel.querySelector('.carousel-slides').setAttribute('aria-live', paused ? 'polite' : 'off');
+        toggle.textContent = paused ? 'Play slides' : 'Pause slides';
+        if (!paused && !hovered && !document.hidden) timer = setInterval(() => show((current + 1) % slides.length), 7000);
+      }
+      function show(index) {
+        current = index;
+        slides.forEach((slide, i) => { slide.hidden = i !== current; });
+        dots.forEach((dot, i) => {
+          if (i === current) dot.setAttribute('aria-current', 'true');
+          else dot.removeAttribute('aria-current');
+        });
+      }
+      dots.forEach((dot, i) => dot.addEventListener('click', () => { paused = true; schedule(); show(i); }));
+      toggle.addEventListener('click', () => { paused = !paused; schedule(); });
+      carousel.addEventListener('mouseenter', () => { hovered = true; schedule(); });
+      carousel.addEventListener('mouseleave', () => { hovered = false; schedule(); });
+      // Keyboard focus stops rotation until the visitor explicitly restarts it.
+      carousel.addEventListener('focusin', () => { paused = true; schedule(); });
+      motion.addEventListener('change', () => { paused = motion.matches; schedule(); });
+      document.addEventListener('visibilitychange', schedule);
+      carousel.querySelector('.carousel-controls').hidden = false;
+      schedule();
+    })();
+  </script>
 </body>
 </html>

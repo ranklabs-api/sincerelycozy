@@ -145,3 +145,43 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
   .site-header .brand img { width: 44px; height: 44px; }
   .site-header .btn { padding: .6rem .95rem; font-size: .92rem; }
 }
+
+/* Homepage: Palloma's eight sections. Scoped to preserve inner-page layouts. */
+.home-main { width: 100%; }
+.home-main [hidden] { display: none !important; }
+.home-main .home-section, .home-main .reviews-section { width: min(1140px, calc(100% - 2rem)); margin: clamp(3rem, 6vw, 5rem) auto; }
+.home-main .section-head { max-width: 780px; }
+.home-main .btn { display: inline-block; margin-top: 1rem; }
+.home-main a:focus-visible, .home-main button:focus-visible { outline: 3px solid var(--ink); outline-offset: 5px; }
+.carousel-slide, .home-banner { position: relative; isolation: isolate; display: flex; align-items: center; min-height: 510px; padding: 3rem max(1rem, calc((100% - 1140px) / 2)); background: var(--cream); }
+.carousel-slide { min-height: 570px; }
+.carousel-slide > img, .home-banner > img { position: absolute; inset: 0 0 0 auto; width: 52%; height: 100%; object-fit: cover; object-position: 35% center; z-index: -2; }
+.carousel-slide::before, .home-banner::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(255,253,247,.98), rgba(255,253,247,.98) 45%, rgba(255,253,247,0) 65%); }
+.banner-copy { width: min(48%, 520px); }
+.banner-copy h2 { font-size: clamp(2rem, 3.6vw, 3.2rem); line-height: 1.13; }
+.banner-copy p:not(.tag) { max-width: 43ch; font-size: 1.1rem; line-height: 1.65; }
+.carousel-controls { display: flex; justify-content: center; align-items: center; gap: 1.25rem; padding: .85rem 1rem; background: var(--bg); }
+.carousel-controls button { font: inherit; font-weight: 800; color: var(--ink); background: white; border: 1px solid var(--ink); border-radius: 999px; min-height: 44px; min-width: 44px; cursor: pointer; }
+.carousel-toggle { padding: .5rem 1rem; }
+.carousel-dots { display: flex; gap: .5rem; }
+.carousel-dots button[aria-current] { background: var(--ink); color: white; }
+.multifunction-grid { list-style: none; padding: 0; margin: 1.5rem 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; }
+.multifunction-grid li { display: grid; place-items: center; min-height: 92px; padding: 1rem; border: 1px solid rgba(157,168,205,.45); border-radius: 18px; background: var(--card); text-align: center; font-weight: 800; }
+.multifunction-grid li:nth-child(3n + 2) { background: #f7eef5; }
+.multifunction-grid a { text-decoration: underline; text-underline-offset: 4px; }
+.featured-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.featured-grid img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius); }
+.home-banner { margin-top: 1rem; }
+.founder-banner > img { object-position: center 35%; }
+.site-footer a { overflow-wrap: anywhere; }
+@media (max-width: 768px) {
+  .carousel-slide, .home-banner { display: flex; flex-direction: column; align-items: stretch; padding: 0; min-height: 0; }
+  .carousel-slide > img, .home-banner > img { position: static; width: 100%; height: 280px; object-position: center; }
+  .carousel-slide::before, .home-banner::before { display: none; }
+  .banner-copy { width: 100%; padding: 1.5rem; background: var(--bg); }
+  .carousel-slide .banner-copy { min-height: 360px; }
+  .multifunction-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .featured-grid { grid-template-columns: 1fr; }
+  .featured-grid img { aspect-ratio: 4 / 3; }
+  .home-main .reviews-grid { grid-template-columns: 1fr; }
+}
