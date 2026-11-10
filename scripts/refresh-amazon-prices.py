@@ -56,6 +56,11 @@ PRODUCTS = (
 
 PRICE_START = "<!-- amazon-price:start -->"
 PRICE_END = "<!-- amazon-price:end -->"
+ALLOWED_COMMIT_PATHS = frozenset(
+    ["data/amazon-prices.json"]
+    + [f"swaddles/{meta['slug']}.html" for meta in PRODUCTS]
+)
+ALERT_EXIT_2 = "ALERT:SHEIK:price-refresh:exit=2 fetch failed; existing prices still within priceValidUntil; no commit"
 SCRIPT_RE = re.compile(
     r'(<script type="application/ld\+json">\s*)(\{.*?\})(\s*</script>)',
     re.S,
@@ -232,21 +237,59 @@ def _money(block: dict | None, key: str) -> tuple[str, str] | None:
     return price, str(currency)
 
 
+def _offer_subcondition(offer: dict) -> str:
+    return str(offer.get("SubCondition") or offer.get("subCondition") or "").lower()
+
+
+def _offer_availability_type(offer: dict) -> str:
+    shipping = offer.get("ShippingTime") or offer.get("shippingTime") or {}
+    raw = shipping.get("availabilityType") or shipping.get("AvailabilityType") or ""
+    return str(raw).upper().replace("-", "_")
+
+
+def _offer_is_backorder(offer: dict) -> bool:
+    blob = json.dumps(offer).lower()
+    return "backorder" in blob or "back-order" in blob or "back_order" in blob
+
+
 def _availability(payload: dict) -> str:
-    summary = payload.get("Summary") or {}
-    offers = payload.get("Offers") or []
-    text_bits = json.dumps(offers).lower()
-    if "preorder" in text_bits or "pre-order" in text_bits:
-        return "https://schema.org/PreOrder"
-    for offer in offers:
-        if str(offer.get("SubCondition") or "").lower() == "new":
+    """Map getItemOffers offer rows to schema.org availability.
+
+    InStock: a New-condition offer that is actually in stock. Signals:
+      ShippingTime.availabilityType == NOW, or a Buy Box winner / FBA offer
+      with no future/backorder shipping type.
+    PreOrder: New-condition offer with availabilityType FUTURE_WITH_DATE,
+      or an explicit backorder.
+    OutOfStock: everything else, including TotalOfferCount>0 or
+      SubCondition==New by themselves, FUTURE_WITHOUT_DATE, or no Offers list.
+    """
+    offers = payload.get("Offers") or payload.get("offers") or []
+    if not isinstance(offers, list):
+        offers = []
+    winners = [o for o in offers if isinstance(o, dict) and o.get("IsBuyBoxWinner") is True]
+    pool = winners or [o for o in offers if isinstance(o, dict)]
+
+    def is_new(offer: dict) -> bool:
+        return _offer_subcondition(offer) == "new"
+
+    for offer in pool:
+        if not is_new(offer):
+            continue
+        atype = _offer_availability_type(offer)
+        if atype == "FUTURE_WITH_DATE" or _offer_is_backorder(offer):
+            return "https://schema.org/PreOrder"
+
+    for offer in pool:
+        if not is_new(offer):
+            continue
+        atype = _offer_availability_type(offer)
+        if atype == "NOW":
             return "https://schema.org/InStock"
-    number = summary.get("NumberOfOffers") or []
-    for row in number:
-        if str(row.get("condition") or "").lower() == "new" and int(row.get("OfferCount") or 0) > 0:
+        if atype in ("", "NOW") and (
+            offer.get("IsBuyBoxWinner") is True or offer.get("IsFulfilledByAmazon") is True
+        ):
             return "https://schema.org/InStock"
-    if int(summary.get("TotalOfferCount") or 0) > 0:
-        return "https://schema.org/InStock"
+
     return "https://schema.org/OutOfStock"
 
 
@@ -294,17 +337,33 @@ def load_price_file(path: Path) -> dict | None:
     return data
 
 
-def still_valid(data: dict | None, now: dt.datetime) -> bool:
-    if not data or not data.get("priceValidUntil"):
-        return False
-    raw = str(data["priceValidUntil"])
+def parse_valid_until(raw) -> dt.datetime | None:
+    if not raw:
+        return None
     try:
-        until = dt.datetime.fromisoformat(raw)
+        until = dt.datetime.fromisoformat(str(raw))
     except ValueError:
-        return False
+        return None
     if until.tzinfo is None:
         until = until.replace(tzinfo=ET)
-    return now < until
+    return until
+
+
+def still_valid(data: dict | None, now: dt.datetime) -> bool:
+    if not data:
+        return False
+    until = parse_valid_until(data.get("priceValidUntil"))
+    return bool(until and now < until)
+
+
+def item_still_valid(item: dict | None, catalog: dict | None, now: dt.datetime) -> bool:
+    """True when this ASIN has a stored ok price and now is before its window."""
+    if not item or item.get("status") != "ok" or not item.get("price"):
+        return False
+    until = parse_valid_until(item.get("priceValidUntil"))
+    if until is None and catalog is not None:
+        until = parse_valid_until(catalog.get("priceValidUntil"))
+    return bool(until and now < until)
 
 
 def amazon_url(asin: str) -> str:
@@ -411,23 +470,6 @@ def patch_page(path: Path, item: dict | None, price_valid_until: str) -> bool:
     return True
 
 
-def ensure_price_css(css_path: Path) -> bool:
-    css = css_path.read_text()
-    if ".product-price {" in css:
-        return False
-    rule = (
-        ".product-price { margin: 1rem 0 0; font-size: 1.35rem; font-weight: 800; color: var(--ink); }\n"
-        ".product-price span { font-size: .92rem; font-weight: 700; color: var(--ink-soft); }\n"
-    )
-    needle = ".product-note { font-size: .92rem; margin-top: 1rem; }\n"
-    if needle in css:
-        css = css.replace(needle, rule + needle, 1)
-    else:
-        css += "\n" + rule
-    css_path.write_text(css)
-    return True
-
-
 def extract_product_ld(html: str) -> dict | None:
     for match in SCRIPT_RE.finditer(html):
         try:
@@ -457,7 +499,7 @@ def validate_page(path: Path, item: dict | None, price_valid_until: str) -> list
         if not isinstance(offers, dict):
             errors.append("missing offers object")
             return errors
-        expected = offer_block(item, price_valid_until)
+        expected = offer_block(item, item.get("priceValidUntil") or price_valid_until)
         for key in ("@type", "url", "priceCurrency", "price", "availability", "priceValidUntil", "itemCondition"):
             if offers.get(key) != expected[key]:
                 errors.append(f"offers.{key}={offers.get(key)!r} expected {expected[key]!r}")
@@ -485,7 +527,7 @@ def validate_all(root: Path, catalog: dict) -> int:
         slug = meta["slug"]
         path = root / "swaddles" / f"{slug}.html"
         item = products.get(slug)
-        errs = validate_page(path, item, until)
+        errs = validate_page(path, item, (item or {}).get("priceValidUntil") or until)
         if errs:
             failed += 1
             log(f"VALIDATE FAIL {slug}: " + "; ".join(errs))
@@ -494,6 +536,141 @@ def validate_all(root: Path, catalog: dict) -> int:
             price = (item or {}).get("price") or "-"
             log(f"VALIDATE OK {slug} status={status} price={price}")
     return failed
+
+
+def keep_existing_item(existing_catalog: dict | None, slug: str, meta: dict, now: dt.datetime) -> dict:
+    """On a per-ASIN transport/API error, keep a still-valid stored Offer."""
+    previous = ((existing_catalog or {}).get("products") or {}).get(slug) or {}
+    base = {"asin": meta["asin"], "url": amazon_url(meta["asin"])}
+    if item_still_valid(previous, existing_catalog, now):
+        kept = {**base, **{k: previous[k] for k in previous}}
+        kept["status"] = "ok"
+        kept["asin"] = meta["asin"]
+        kept["url"] = previous.get("url") or base["url"]
+        if not kept.get("priceValidUntil") and existing_catalog:
+            kept["priceValidUntil"] = existing_catalog.get("priceValidUntil")
+        return kept
+    return {
+        **base,
+        "status": "error",
+        "price": None,
+        "availability": None,
+        "reason": "refresh failed",
+    }
+
+
+def merge_fetch_results(
+    existing_catalog: dict | None,
+    results: dict[str, dict],
+    now: dt.datetime,
+) -> dict[str, dict]:
+    """Keep still-valid prices on per-ASIN transport/API errors; drop expired ones.
+
+    A successful no_buy_box response is not an error: that ASIN is dropped.
+    """
+    merged = {}
+    for meta in PRODUCTS:
+        slug = meta["slug"]
+        fresh = results[slug]
+        if fresh.get("status") == "error":
+            kept = keep_existing_item(existing_catalog, slug, meta, now)
+            if kept.get("status") == "ok":
+                log(
+                    f"ASIN={meta['asin']} slug={slug} fetch error "
+                    f"({fresh.get('reason')}); keeping stored Offer until {kept.get('priceValidUntil')}"
+                )
+            else:
+                log(
+                    f"ASIN={meta['asin']} slug={slug} fetch error "
+                    f"({fresh.get('reason')}); stored Offer missing or expired; dropping"
+                )
+            merged[slug] = kept
+            continue
+        if fresh.get("status") == "ok" and not fresh.get("priceValidUntil"):
+            # filled later by write_catalog from the batch until
+            pass
+        merged[slug] = fresh
+    return merged
+
+
+def neutralize_html(html: str) -> str:
+    """Strip Offer JSON-LD and amazon-price marker blocks for confined-diff checks."""
+    html = strip_visible_price(html)
+
+    def repl(match: re.Match) -> str:
+        prefix, raw, suffix = match.group(1), match.group(2), match.group(3)
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return match.group(0)
+        if data.get("@type") != "Product":
+            return match.group(0)
+        data.pop("offers", None)
+        return prefix + json.dumps(data, indent=2, ensure_ascii=False) + suffix
+
+    return SCRIPT_RE.sub(repl, html)
+
+
+def html_changes_are_confined(old: str, new: str) -> bool:
+    """True when the only HTML differences are Offer JSON-LD and price markers."""
+    return neutralize_html(old) == neutralize_html(new)
+
+
+def git_porcelain(root: Path) -> list[tuple[str, str]]:
+    """Return (status, path) from git status --porcelain. Paths are relative to root."""
+    import subprocess
+
+    proc = subprocess.run(
+        ["git", "-C", str(root), "status", "--porcelain", "-uall"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    rows = []
+    for line in proc.stdout.splitlines():
+        if not line:
+            continue
+        status, path = line[:2], line[3:]
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        rows.append((status, path))
+    return rows
+
+
+def git_show(root: Path, rev_path: str) -> str:
+    import subprocess
+
+    proc = subprocess.run(
+        ["git", "-C", str(root), "show", rev_path],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        return ""
+    return proc.stdout
+
+
+def check_commit_diff(root: Path) -> list[str]:
+    """Problems that should block a prices commit. Empty means the tree is committable."""
+    problems = []
+    dirty = git_porcelain(root)
+    if not dirty:
+        return problems
+    for status, path in dirty:
+        if path not in ALLOWED_COMMIT_PATHS:
+            problems.append(f"dirty path not allowed: {path}")
+    for status, path in dirty:
+        if not path.startswith("swaddles/") or not path.endswith(".html"):
+            continue
+        if path not in ALLOWED_COMMIT_PATHS:
+            continue
+        old = git_show(root, f"HEAD:{path}")
+        new = (root / path).read_text() if (root / path).is_file() else ""
+        if not html_changes_are_confined(old, new):
+            problems.append(
+                f"html diff outside Offer JSON-LD / amazon-price markers: {path}"
+            )
+    return problems
 
 
 def fetch_all(access_token: str) -> tuple[dict[str, dict], int]:
@@ -541,6 +718,7 @@ def write_catalog(path: Path, results: dict[str, dict], fetched_at: dt.datetime,
             entry["price"] = item["price"]
             entry["priceCurrency"] = "USD"
             entry["availability"] = item["availability"]
+            entry["priceValidUntil"] = item.get("priceValidUntil") or until.isoformat()
         else:
             entry["price"] = None
             entry["availability"] = None
@@ -561,16 +739,17 @@ def write_catalog(path: Path, results: dict[str, dict], fetched_at: dt.datetime,
 
 
 def apply_catalog(root: Path, catalog: dict) -> list[str]:
+    # styles.css is maintained in the implementation PR only. Daily refreshes
+    # must not touch it.
     changed = []
-    until = catalog["priceValidUntil"]
+    fallback_until = catalog.get("priceValidUntil") or ""
     for meta in PRODUCTS:
         slug = meta["slug"]
+        item = catalog["products"][slug]
         path = root / "swaddles" / f"{slug}.html"
-        if patch_page(path, catalog["products"][slug], until):
+        until = item.get("priceValidUntil") or fallback_until
+        if patch_page(path, item, until):
             changed.append(str(path.relative_to(root)))
-    css_path = root / "styles.css"
-    if ensure_price_css(css_path):
-        changed.append("styles.css")
     return changed
 
 
@@ -582,9 +761,24 @@ def main() -> int:
         action="store_true",
         help="validate existing patched pages against data/amazon-prices.json",
     )
+    ap.add_argument(
+        "--check-commit-diff",
+        action="store_true",
+        help="exit 1 if the worktree has disallowed paths or HTML hunks outside Offer/price markers",
+    )
     args = ap.parse_args()
     root = Path(args.root).resolve()
     price_path = root / "data" / "amazon-prices.json"
+
+    if args.check_commit_diff:
+        problems = check_commit_diff(root)
+        for problem in problems:
+            log(problem)
+        if problems:
+            log("COMMIT BLOCKED")
+            return 1
+        log("COMMIT DIFF OK")
+        return 0
 
     if args.validate_only:
         catalog = load_price_file(price_path)
@@ -606,6 +800,7 @@ def main() -> int:
     except SystemExit:
         if still_valid(existing, now):
             log("FETCH FAILED; existing prices still within priceValidUntil; leaving site files unchanged")
+            log(ALERT_EXIT_2)
             return 2
         if existing:
             log("FETCH FAILED; priceValidUntil has passed or is missing; stripping Offers and visible prices")
@@ -627,10 +822,11 @@ def main() -> int:
         log("FETCH FAILED; no existing price file; leaving pages without Offers")
         raise
 
-    ok_count = sum(1 for item in results.values() if item["status"] == "ok")
-    if ok_count == 0 and transport_errors == len(PRODUCTS):
+    live_ok = sum(1 for item in results.values() if item["status"] == "ok")
+    if live_ok == 0 and transport_errors == len(PRODUCTS):
         if still_valid(existing, now):
             log("ALL getItemOffers calls failed; existing prices still valid; leaving site files unchanged")
+            log(ALERT_EXIT_2)
             return 2
         log("ALL getItemOffers calls failed; stripping Offers rather than keeping stale prices")
         catalog = write_catalog(price_path, results, now, now)
@@ -639,6 +835,7 @@ def main() -> int:
         failed = validate_all(root, catalog)
         return 3 if not failed else 1
 
+    results = merge_fetch_results(existing, results, now)
     until = now + dt.timedelta(hours=PRICE_VALID_HOURS)
     catalog = write_catalog(price_path, results, now, until)
     changed = apply_catalog(root, catalog)
@@ -648,7 +845,8 @@ def main() -> int:
     if failed:
         log(f"ERROR: {failed} page(s) failed JSON-LD/visible-price validation")
         return 1
-    log(f"OK: {ok_count} of {len(PRODUCTS)} products have a live Buy Box Offer")
+    ok_count = sum(1 for item in catalog["products"].values() if item.get("status") == "ok")
+    log(f"OK: {ok_count} of {len(PRODUCTS)} products have a Buy Box Offer")
     return 0
 
 

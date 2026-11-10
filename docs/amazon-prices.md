@@ -4,7 +4,7 @@ Sincerely Cozy product pages show a visible price and a Product `Offer` in JSON-
 
 ## What the job does
 
-`scripts/refresh-amazon-prices.sh` is the scheduler-ready entrypoint. It runs `scripts/refresh-amazon-prices.py`, which:
+`scripts/refresh-amazon-prices.sh` is the scheduler-ready refresh entrypoint. After an explicit GO, daily runs that should also commit use `scripts/refresh-amazon-prices-commit.sh` instead. Both run `scripts/refresh-amazon-prices.py`, which:
 
 1. Exchanges the LWA refresh token for an access token.
 2. Calls the Selling Partner API **read-only** endpoint `getItemOffers` for each of the six ASINs, marketplace `ATVPDKIKX0DER` (US), `ItemCondition=New`:
@@ -30,26 +30,54 @@ All secrets are read at runtime. They must not be committed, printed, or written
 
 On the Rank Labs box the clean client id file is `/home/box/ranklabs/secrets/amazon-spapi.env`.
 
+## Availability mapping
+
+`_availability` looks at `Offers[]` from `getItemOffers` (the Buy Box winner rows if any, otherwise every offer). `Summary.TotalOfferCount` and `SubCondition==New` by themselves never mean InStock.
+
+| Signal on a **New**-condition offer | schema.org availability |
+|---|---|
+| `ShippingTime.availabilityType` is `NOW` | `InStock` |
+| `IsBuyBoxWinner` or `IsFulfilledByAmazon` is true, and the shipping type is not a future/backorder value | `InStock` |
+| `ShippingTime.availabilityType` is `FUTURE_WITH_DATE`, or the offer is an explicit backorder | `PreOrder` |
+| Anything else, including `FUTURE_WITHOUT_DATE`, no `Offers` list, or only `TotalOfferCount>0` / `SubCondition==New` | `OutOfStock` |
+
+If a Buy Box amount exists but availability is `OutOfStock` or `PreOrder`, the Offer still carries that availability and the amount (the plan allows an Offer with those fields). A page never claims `InStock` without an in-stock New offer as defined above.
+
 ## Failure mode
 
-- If the refresh fails and `priceValidUntil` is still in the future, the site files are left alone.
-- If the refresh fails and the window has expired (or there is no price file), Offers and visible prices are stripped. The Product schema stays.
-- If only some ASINs have a Buy Box, the others are left without an Offer. Missing prices are never invented.
+- If **every** ASIN call fails (LWA or `getItemOffers`) and the catalog `priceValidUntil` is still in the future, the site files are left alone (exit 2). The commit wrapper does not commit and prints `ALERT:SHEIK:price-refresh:exit=2 ...` on stderr so a routine can notify Sheik. The script does not send email.
+- If every ASIN call fails and the window has expired (or there is no price file), Offers and visible prices are stripped. The Product schema stays.
+- On a **per-ASIN** transport or API error, if `now` is still before **that ASIN's** stored `priceValidUntil` (falling back to the catalog window), the existing Offer and visible price are kept and the window is not extended. If the window has expired or there is no stored price, that ASIN's Offer and price are dropped. This matches the all-fail keep-or-strip rule, applied per ASIN.
+- A successful response with no Buy Box is not an error: that ASIN is dropped, never invented.
+
+## Commit wrapper
+
+`scripts/refresh-amazon-prices-commit.sh` is the commit entrypoint. It:
+
+1. `git fetch`es and requires a clean checkout on `main` that equals `origin/main`.
+2. Runs the refresh.
+3. Stages only `data/amazon-prices.json` and the six `swaddles/*.html` files.
+4. Refuses to commit if any other path is dirty, or if an HTML diff hunk falls outside the Product Offer JSON-LD and the `amazon-price` markers.
+5. On refresh exit 1, restores the working tree (`git restore` / `git checkout`) and does not commit.
+6. On refresh exit 2, does not commit and prints the `ALERT:SHEIK:price-refresh:exit=2` hook on stderr (non-zero exit). No email is sent.
+7. **Does not push.** A push to `main` stays documented-only and gated on an explicit GO.
 
 ## Schedule (not installed yet)
 
-Do not add cron or a routine until there is an explicit GO to run this on a schedule, and a standing GO before any auto-commit to `main` (Cloudflare Pages deploys `main` to production).
+Do not add cron or a routine until there is an explicit GO to run this on a schedule, and a standing GO before any push to `main` (Cloudflare Pages deploys `main` to production).
 
-After that GO, the daily command at **7:00 AM America/New_York** is:
+After the schedule GO, the daily command at **7:00 AM America/New_York** is:
 
 ```bash
 AMAZON_SPAPI_CLIENT_ID_FILE=/home/box/ranklabs/secrets/amazon-spapi.env \
-  /home/box/.hermes/workspace/ranklabs/sites/sincerelycozy/scripts/refresh-amazon-prices.sh
+  /home/box/.hermes/workspace/ranklabs/sites/sincerelycozy/scripts/refresh-amazon-prices-commit.sh
 ```
 
-Run it only from a clean `main` checkout of `ranklabs-api/sincerelycozy`. If that checkout is dirty or behind, use the GitHub Git Data API (same path as site content PRs) instead of creating a new clone or worktree. A later standing GO can commit a successful refresh with:
+Run it only from a clean `main` checkout of `ranklabs-api/sincerelycozy`. If that checkout is dirty or behind, fix the checkout (or use the GitHub Git Data API) instead of creating a new clone or worktree. A successful local commit uses:
 
 `chore(prices): refresh Amazon Buy Box prices YYYY-MM-DD`
+
+A later, separate GO is still required before pushing that commit to `main`.
 
 Validate a checkout without calling Amazon:
 
