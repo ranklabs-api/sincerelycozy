@@ -61,6 +61,10 @@ ALLOWED_COMMIT_PATHS = frozenset(
     + [f"swaddles/{meta['slug']}.html" for meta in PRODUCTS]
 )
 ALERT_EXIT_2 = "ALERT:SHEIK:price-refresh:exit=2 fetch failed; existing prices still within priceValidUntil; no commit"
+ALERT_PUSH_FAILED = "ALERT:SHEIK:price-refresh:push-failed"
+PRICE_JSON = "data/amazon-prices.json"
+# Porcelain "XY": only an unstaged modification (" M") is acceptable on allowlisted paths.
+ALLOWED_PORCELAIN = " M"
 SCRIPT_RE = re.compile(
     r'(<script type="application/ld\+json">\s*)(\{.*?\})(\s*</script>)',
     re.S,
@@ -650,16 +654,42 @@ def git_show(root: Path, rev_path: str) -> str:
     return proc.stdout
 
 
+def _porcelain_problem(status: str, path: str) -> str | None:
+    """Return a problem string if this porcelain entry is not an unstaged M on an allowlisted path."""
+    if path not in ALLOWED_COMMIT_PATHS:
+        return f"dirty path not allowed: {path}"
+    if status != ALLOWED_PORCELAIN:
+        kind = status.strip()
+        if status == "??":
+            return f"untracked path not allowed: {path}"
+        if "D" in status:
+            return f"deletion not allowed: {path} (status {status!r})"
+        if "R" in status:
+            return f"rename not allowed: {path} (status {status!r})"
+        if "A" in status:
+            return f"addition not allowed: {path} (status {status!r})"
+        if status[0] != " ":
+            return f"staged entry not allowed: {path} (status {status!r})"
+        return f"porcelain status {status!r} not allowed on {path} (only unstaged M is accepted)"
+    return None
+
+
 def check_commit_diff(root: Path) -> list[str]:
-    """Problems that should block a prices commit. Empty means the tree is committable."""
+    """Problems that should block a prices commit (pre-staging). Empty means the tree is committable."""
     problems = []
+    json_path = root / PRICE_JSON
+    if not json_path.is_file():
+        problems.append(f"required file is missing: {PRICE_JSON}")
     dirty = git_porcelain(root)
     if not dirty:
         return problems
     for status, path in dirty:
-        if path not in ALLOWED_COMMIT_PATHS:
-            problems.append(f"dirty path not allowed: {path}")
+        problem = _porcelain_problem(status, path)
+        if problem:
+            problems.append(problem)
     for status, path in dirty:
+        if status != ALLOWED_PORCELAIN:
+            continue
         if not path.startswith("swaddles/") or not path.endswith(".html"):
             continue
         if path not in ALLOWED_COMMIT_PATHS:
@@ -670,6 +700,42 @@ def check_commit_diff(root: Path) -> list[str]:
             problems.append(
                 f"html diff outside Offer JSON-LD / amazon-price markers: {path}"
             )
+    return problems
+
+
+def git_cached_name_status(root: Path) -> list[tuple[str, str]]:
+    """Return (status, path) from git diff --cached --name-status."""
+    import subprocess
+
+    proc = subprocess.run(
+        ["git", "-C", str(root), "diff", "--cached", "--name-status"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    rows = []
+    for line in proc.stdout.splitlines():
+        if not line:
+            continue
+        parts = line.split("	")
+        status, path = parts[0], parts[-1]
+        rows.append((status, path))
+    return rows
+
+
+def check_cached_index(root: Path) -> list[str]:
+    """Post-git-add check: the index must be M-only on allowlisted paths."""
+    problems = []
+    json_path = root / PRICE_JSON
+    if not json_path.is_file():
+        problems.append(f"required file is missing: {PRICE_JSON}")
+    for status, path in git_cached_name_status(root):
+        code = status[0] if status else ""
+        if path not in ALLOWED_COMMIT_PATHS:
+            problems.append(f"cached path not allowed: {path} (status {status})")
+            continue
+        if code != "M":
+            problems.append(f"cached status {status} not allowed: {path} (only M is accepted)")
     return problems
 
 
@@ -764,7 +830,12 @@ def main() -> int:
     ap.add_argument(
         "--check-commit-diff",
         action="store_true",
-        help="exit 1 if the worktree has disallowed paths or HTML hunks outside Offer/price markers",
+        help="exit 1 if the worktree has disallowed porcelain status, a missing price JSON, or HTML hunks outside Offer/price markers",
+    )
+    ap.add_argument(
+        "--check-cached-index",
+        action="store_true",
+        help="exit 1 if git diff --cached --name-status is not M-only on allowlisted paths",
     )
     args = ap.parse_args()
     root = Path(args.root).resolve()
@@ -778,6 +849,16 @@ def main() -> int:
             log("COMMIT BLOCKED")
             return 1
         log("COMMIT DIFF OK")
+        return 0
+
+    if args.check_cached_index:
+        problems = check_cached_index(root)
+        for problem in problems:
+            log(problem)
+        if problems:
+            log("CACHED INDEX BLOCKED")
+            return 1
+        log("CACHED INDEX OK")
         return 0
 
     if args.validate_only:

@@ -1,14 +1,23 @@
 #!/bin/bash
 # Commit a successful Amazon price refresh on a clean, up-to-date main checkout.
-# Does not push. A push to main stays documented-only and gated on an explicit GO.
-# Does not send email. On refresh exit 2, prints a marked ALERT hook on stderr
-# so a routine can notify Sheik.
+# With --push, push that single commit to origin/main. Without --push, commit only.
+# Does not send email. On refresh exit 2 or a failed push, prints a marked ALERT
+# hook on stderr so a routine can notify Sheik.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 REFRESH_PY="$ROOT/scripts/refresh-amazon-prices.py"
 ALERT_EXIT_2="ALERT:SHEIK:price-refresh:exit=2 fetch failed; existing prices still within priceValidUntil; no commit"
+ALERT_PUSH_FAILED="ALERT:SHEIK:price-refresh:push-failed"
+
+PUSH=0
+for arg in "$@"; do
+  case "$arg" in
+    --push) PUSH=1 ;;
+    *) echo "ERROR: unknown argument: $arg (only --push is accepted)" >&2; exit 1 ;;
+  esac
+done
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 
@@ -82,7 +91,33 @@ git add -- \
   swaddles/little-butterfly.html \
   swaddles/pickaboo-bear.html
 
+set +e
+python3 "$REFRESH_PY" --root "$ROOT" --check-cached-index
+index_guard=$?
+set -e
+if [[ "$index_guard" -ne 0 ]]; then
+  echo "ERROR: cached index check failed; running git reset --hard HEAD; no commit" >&2
+  git reset --hard HEAD
+  exit 1
+fi
+
 date_et="$(TZ=America/New_York date +%F)"
 git commit -m "chore(prices): refresh Amazon Buy Box prices ${date_et}"
-echo "Committed locally. Push to main is documented-only and gated on an explicit GO."
+
+if [[ "$PUSH" -eq 1 ]]; then
+  set +e
+  git push origin HEAD:main
+  push_rc=$?
+  set -e
+  if [[ "$push_rc" -ne 0 ]]; then
+    echo "$ALERT_PUSH_FAILED" >&2
+    git fetch origin >/dev/null 2>&1 || true
+    git reset --hard origin/main >/dev/null 2>&1 || true
+    exit 1
+  fi
+  echo "Pushed HEAD to origin/main."
+  exit 0
+fi
+
+echo "Committed locally. Push to origin/main requires --push and is gated on an explicit GO."
 exit 0

@@ -313,16 +313,22 @@ class TestCommitWrapper(unittest.TestCase):
         os.chmod(path, os.stat(path).st_mode | stat.S_IEXEC)
         return path
 
-    def _wrapper(self, stub: Path | None = None, check=False):
-        env = {}
+    def _wrapper(self, stub: Path | None = None, check=False, extra_args=None, env=None):
+        merged = {}
         if stub is not None:
-            env["PRICE_REFRESH_BIN"] = str(stub)
-        return _run(
-            ["bash", str(self.repo / "scripts" / "refresh-amazon-prices-commit.sh")],
-            self.repo,
-            check=check,
-            env=env,
-        )
+            merged["PRICE_REFRESH_BIN"] = str(stub)
+        if env:
+            merged.update(env)
+        cmd = ["bash", str(self.repo / "scripts" / "refresh-amazon-prices-commit.sh")]
+        if extra_args:
+            cmd.extend(extra_args)
+        return _run(cmd, self.repo, check=check, env=merged)
+
+    def _origin_sha(self):
+        return _git(self.origin, "rev-parse", "refs/heads/main").stdout.strip()
+
+    def _head_sha(self):
+        return _git(self.repo, "rev-parse", "HEAD").stdout.strip()
 
     def _log_count(self):
         return int(_git(self.repo, "rev-list", "--count", "HEAD").stdout.strip())
@@ -410,6 +416,7 @@ sys.exit(0)
         self.assertEqual(sorted(names), ["data/amazon-prices.json", "swaddles/rose-petal.html"])
         self.assertIn("Committed locally", result.stdout)
         self.assertIn("gated on an explicit GO", result.stdout)
+        self.assertNotEqual(self._head_sha(), self._origin_sha())
 
     def test_exit_0_refuses_other_dirty_path(self):
         stub = self._stub(
@@ -440,6 +447,203 @@ sys.exit(0)
         self.assertEqual(result.returncode, 1)
         self.assertIn("html diff outside Offer JSON-LD / amazon-price markers", result.stderr)
         self.assertEqual(self._log_count(), 1)
+
+    def test_refuses_json_unlink(self):
+        stub = self._stub(
+            """
+import pathlib, sys
+root = pathlib.Path(sys.argv[sys.argv.index('--root') + 1])
+(root / 'data' / 'amazon-prices.json').unlink()
+sys.exit(0)
+"""
+        )
+        result = self._wrapper(stub)
+        self.assertEqual(result.returncode, 1)
+        combined = result.stdout + result.stderr
+        self.assertTrue(
+            "required file is missing: data/amazon-prices.json" in combined
+            or "deletion not allowed: data/amazon-prices.json" in combined,
+            combined,
+        )
+        self.assertEqual(self._log_count(), 1)
+        self.assertFalse(self._head_sha() != _git(self.repo, "rev-parse", "main").stdout.strip())
+
+    def test_refuses_git_rm(self):
+        stub = self._stub(
+            """
+import pathlib, subprocess, sys
+root = pathlib.Path(sys.argv[sys.argv.index('--root') + 1])
+subprocess.check_call(['git', '-C', str(root), 'rm', '--', 'data/amazon-prices.json'])
+sys.exit(0)
+"""
+        )
+        result = self._wrapper(stub)
+        self.assertEqual(result.returncode, 1)
+        combined = result.stdout + result.stderr
+        self.assertTrue(
+            "required file is missing: data/amazon-prices.json" in combined
+            or "deletion not allowed: data/amazon-prices.json" in combined
+            or "staged entry not allowed: data/amazon-prices.json" in combined,
+            combined,
+        )
+        self.assertEqual(self._log_count(), 1)
+
+    def test_refuses_unlink_plus_html_edit(self):
+        stub = self._stub(
+            r"""
+import pathlib, sys
+root = pathlib.Path(sys.argv[sys.argv.index('--root') + 1])
+page = root / 'swaddles' / 'rose-petal.html'
+text = page.read_text()
+if '"offers"' not in text:
+    text = text.replace(
+        '"url": "https://sincerelycozy.com/swaddles/rose-petal"',
+        '"offers": {"@type": "Offer", "price": "29.99", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://www.amazon.com/dp/B08N2T6RCQ", "priceValidUntil": "2026-11-12", "itemCondition": "https://schema.org/NewCondition"}, "url": "https://sincerelycozy.com/swaddles/rose-petal"',
+        1,
+    )
+    text = text.replace(
+        '        <div class="hero-actions">Shop</div>',
+        '<!-- amazon-price:start -->\n        <p class="product-price">$29.99 <span>on Amazon</span></p>\n        <!-- amazon-price:end -->\n        <div class="hero-actions">Shop</div>',
+        1,
+    )
+    page.write_text(text)
+(root / 'data' / 'amazon-prices.json').unlink()
+sys.exit(0)
+"""
+        )
+        result = self._wrapper(stub)
+        self.assertEqual(result.returncode, 1)
+        combined = result.stdout + result.stderr
+        self.assertTrue(
+            "required file is missing: data/amazon-prices.json" in combined
+            or "deletion not allowed: data/amazon-prices.json" in combined,
+            combined,
+        )
+        self.assertEqual(self._log_count(), 1)
+        names = _git(self.repo, "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD").stdout.split()
+        self.assertEqual(names, [])  # still the init commit; no price commit
+
+    def test_check_cached_index_rejects_staged_deletion(self):
+        _git(self.repo, "rm", "--", "data/amazon-prices.json")
+        problems = mod.check_cached_index(self.repo)
+        joined = "\n".join(problems)
+        self.assertTrue(problems, joined)
+        self.assertIn("data/amazon-prices.json", joined)
+        self.assertTrue("missing" in joined or "not allowed" in joined, joined)
+
+    def test_push_updates_origin_main(self):
+        stub = self._stub(
+            r"""
+import json, pathlib, sys
+root = pathlib.Path(sys.argv[sys.argv.index('--root') + 1])
+page = root / 'swaddles' / 'rose-petal.html'
+text = page.read_text()
+if '"offers"' not in text:
+    text = text.replace(
+        '"url": "https://sincerelycozy.com/swaddles/rose-petal"',
+        '"offers": {"@type": "Offer", "price": "29.99", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://www.amazon.com/dp/B08N2T6RCQ", "priceValidUntil": "2026-11-12", "itemCondition": "https://schema.org/NewCondition"}, "url": "https://sincerelycozy.com/swaddles/rose-petal"',
+        1,
+    )
+    text = text.replace(
+        '        <div class="hero-actions">Shop</div>',
+        '<!-- amazon-price:start -->\n        <p class="product-price">$29.99 <span>on Amazon</span></p>\n        <!-- amazon-price:end -->\n        <div class="hero-actions">Shop</div>',
+        1,
+    )
+    page.write_text(text)
+(root / 'data' / 'amazon-prices.json').write_text(json.dumps({"ok": True}) + '\n')
+sys.exit(0)
+"""
+        )
+        result = self._wrapper(stub, extra_args=["--push"])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self._log_count(), 2)
+        self.assertEqual(self._head_sha(), self._origin_sha())
+        self.assertIn("Pushed HEAD to origin/main", result.stdout)
+        names = _git(self.origin, "diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD").stdout.split()
+        # bare repo HEAD is the tip
+        names = _git(self.origin, "diff-tree", "--no-commit-id", "--name-only", "-r", "refs/heads/main").stdout.split()
+        self.assertEqual(sorted(names), ["data/amazon-prices.json", "swaddles/rose-petal.html"])
+
+    def test_push_failure_non_fast_forward(self):
+        stub = self._stub(
+            r"""
+import json, os, pathlib, subprocess, sys
+root = pathlib.Path(sys.argv[sys.argv.index('--root') + 1])
+page = root / 'swaddles' / 'rose-petal.html'
+text = page.read_text()
+if '"offers"' not in text:
+    text = text.replace(
+        '"url": "https://sincerelycozy.com/swaddles/rose-petal"',
+        '"offers": {"@type": "Offer", "price": "29.99", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://www.amazon.com/dp/B08N2T6RCQ", "priceValidUntil": "2026-11-12", "itemCondition": "https://schema.org/NewCondition"}, "url": "https://sincerelycozy.com/swaddles/rose-petal"',
+        1,
+    )
+    text = text.replace(
+        '        <div class="hero-actions">Shop</div>',
+        '<!-- amazon-price:start -->\n        <p class="product-price">$29.99 <span>on Amazon</span></p>\n        <!-- amazon-price:end -->\n        <div class="hero-actions">Shop</div>',
+        1,
+    )
+    page.write_text(text)
+(root / 'data' / 'amazon-prices.json').write_text(json.dumps({"ok": True}) + '\n')
+origin = os.environ['TEST_ORIGIN']
+ident = {
+    **os.environ,
+    'GIT_AUTHOR_NAME': 'Test',
+    'GIT_AUTHOR_EMAIL': 'test@example.com',
+    'GIT_COMMITTER_NAME': 'Test',
+    'GIT_COMMITTER_EMAIL': 'test@example.com',
+}
+head = subprocess.check_output(['git', '-C', origin, 'rev-parse', 'refs/heads/main'], text=True).strip()
+tree = subprocess.check_output(['git', '-C', origin, 'rev-parse', head + '^{tree}'], text=True).strip()
+new = subprocess.check_output(
+    ['git', '-C', origin, 'commit-tree', tree, '-p', head, '-m', 'origin moved'],
+    text=True,
+    env=ident,
+).strip()
+subprocess.check_call(['git', '-C', origin, 'update-ref', 'refs/heads/main', new])
+sys.exit(0)
+"""
+        )
+        result = self._wrapper(
+            stub,
+            extra_args=["--push"],
+            env={"TEST_ORIGIN": str(self.origin)},
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ALERT:SHEIK:price-refresh:push-failed", result.stderr)
+        # fetch + reset --hard should land on the moved origin tip, dropping the local price commit
+        self.assertEqual(self._head_sha(), self._origin_sha())
+        log_msg = _git(self.repo, "log", "-1", "--format=%s").stdout
+        self.assertIn("origin moved", log_msg)
+        self.assertNotIn("refresh Amazon Buy Box prices", log_msg)
+
+    def test_push_failure_missing_remote(self):
+        stub = self._stub(
+            r"""
+import json, pathlib, subprocess, sys
+root = pathlib.Path(sys.argv[sys.argv.index('--root') + 1])
+page = root / 'swaddles' / 'rose-petal.html'
+text = page.read_text()
+if '"offers"' not in text:
+    text = text.replace(
+        '"url": "https://sincerelycozy.com/swaddles/rose-petal"',
+        '"offers": {"@type": "Offer", "price": "29.99", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "url": "https://www.amazon.com/dp/B08N2T6RCQ", "priceValidUntil": "2026-11-12", "itemCondition": "https://schema.org/NewCondition"}, "url": "https://sincerelycozy.com/swaddles/rose-petal"',
+        1,
+    )
+    text = text.replace(
+        '        <div class="hero-actions">Shop</div>',
+        '<!-- amazon-price:start -->\n        <p class="product-price">$29.99 <span>on Amazon</span></p>\n        <!-- amazon-price:end -->\n        <div class="hero-actions">Shop</div>',
+        1,
+    )
+    page.write_text(text)
+(root / 'data' / 'amazon-prices.json').write_text(json.dumps({"ok": True}) + '\n')
+subprocess.check_call(['git', '-C', str(root), 'remote', 'remove', 'origin'])
+sys.exit(0)
+"""
+        )
+        result = self._wrapper(stub, extra_args=["--push"])
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ALERT:SHEIK:price-refresh:push-failed", result.stderr)
+        # origin is gone, so reset may not drop the local commit; still must exit nonzero
 
 
 if __name__ == "__main__":

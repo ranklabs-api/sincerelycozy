@@ -56,28 +56,28 @@ If a Buy Box amount exists but availability is `OutOfStock` or `PreOrder`, the O
 
 1. `git fetch`es and requires a clean checkout on `main` that equals `origin/main`.
 2. Runs the refresh.
-3. Stages only `data/amazon-prices.json` and the six `swaddles/*.html` files.
-4. Refuses to commit if any other path is dirty, or if an HTML diff hunk falls outside the Product Offer JSON-LD and the `amazon-price` markers.
-5. On refresh exit 1, restores the working tree (`git restore` / `git checkout`) and does not commit.
-6. On refresh exit 2, does not commit and prints the `ALERT:SHEIK:price-refresh:exit=2` hook on stderr (non-zero exit). No email is sent.
-7. **Does not push.** A push to `main` stays documented-only and gated on an explicit GO.
+3. Before staging, refuses any `git status --porcelain` entry other than an unstaged `M` on the seven allowlisted paths (`data/amazon-prices.json` and the six `swaddles/*.html` files). Deletions (`D`), renames (`R`), additions (`A`), untracked files (`??`), and any staged entries are rejected. It also refuses if `data/amazon-prices.json` is missing.
+4. Stages only those seven allowlisted paths.
+5. After `git add`, re-checks the index: `git diff --cached --name-status` must be `M` only, and only on allowlisted paths. Otherwise it runs `git reset --hard HEAD` to restore the worktree and exits 1.
+6. Also refuses if an HTML diff hunk falls outside the Product Offer JSON-LD and the `amazon-price` markers.
+7. On refresh exit 1, restores the working tree (`git restore` / `git checkout`) and does not commit.
+8. On refresh exit 2, does not commit and prints the `ALERT:SHEIK:price-refresh:exit=2` hook on stderr (non-zero exit). No email is sent.
+9. With `--push`, after the index check passes and the commit succeeds, runs `git push origin HEAD:main` for that single commit. On push failure it runs `git fetch origin` then `git reset --hard origin/main`, prints `ALERT:SHEIK:price-refresh:push-failed` on stderr, and exits non-zero. Without `--push` it stays commit-only.
 
 ## Schedule (not installed yet)
 
-Do not add cron or a routine until there is an explicit GO to run this on a schedule, and a standing GO before any push to `main` (Cloudflare Pages deploys `main` to production).
+Do not add cron or a routine, and do not pass `--push`, until there is an explicit GO. Cloudflare Pages deploys `main` to production.
 
-After the schedule GO, the daily command at **7:00 AM America/New_York** is:
+After that GO, the daily command at **7:00 AM America/New_York** is:
 
 ```bash
 AMAZON_SPAPI_CLIENT_ID_FILE=/home/box/ranklabs/secrets/amazon-spapi.env \
-  /home/box/.hermes/workspace/ranklabs/sites/sincerelycozy/scripts/refresh-amazon-prices-commit.sh
+  /home/box/.hermes/workspace/ranklabs/sites/sincerelycozy/scripts/refresh-amazon-prices-commit.sh --push
 ```
 
-Run it only from a clean `main` checkout of `ranklabs-api/sincerelycozy`. If that checkout is dirty or behind, fix the checkout (or use the GitHub Git Data API) instead of creating a new clone or worktree. A successful local commit uses:
+Run it only from a clean `main` checkout of `ranklabs-api/sincerelycozy`. If that checkout is dirty or behind, fix the checkout (or use the GitHub Git Data API) instead of creating a new clone or worktree. A successful commit uses:
 
 `chore(prices): refresh Amazon Buy Box prices YYYY-MM-DD`
-
-A later, separate GO is still required before pushing that commit to `main`.
 
 Validate a checkout without calling Amazon:
 
