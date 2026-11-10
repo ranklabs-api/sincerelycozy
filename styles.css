@@ -124,6 +124,8 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
 .product-facts div { background: var(--bg); border: 1px dashed rgba(157,168,205,.55); border-radius: 14px; padding: .6rem .8rem; }
 .product-facts dt { font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; color: #a06b9a; }
 .product-facts dd { margin: .15rem 0 0; font-weight: 800; }
+.product-price { margin: 1rem 0 0; font-size: 1.35rem; font-weight: 800; color: var(--ink); }
+.product-price span { font-size: .92rem; font-weight: 700; color: var(--ink-soft); }
 .product-note { font-size: .92rem; margin-top: 1rem; }
 .page-hero p { color: var(--ink-soft); line-height: 1.7; max-width: 70ch; }
 .swaddle-card .card-blurb { margin: 0 0 .3rem; color: var(--ink-soft); }
