@@ -26,9 +26,12 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import http.client
 import json
 import os
 import re
+import socket
+import ssl
 import sys
 import time
 import urllib.error
@@ -65,6 +68,20 @@ ALERT_PUSH_FAILED = "ALERT:SHEIK:price-refresh:push-failed"
 PRICE_JSON = "data/amazon-prices.json"
 # Porcelain "XY": only an unstaged modification (" M") is acceptable on allowlisted paths.
 ALLOWED_PORCELAIN = " M"
+# Transport failures that must enter the keep/strip path, not an uncaught exit 1.
+# HTTPError is a URLError subclass; callers must handle HTTPError first.
+# HTTPException covers IncompleteRead and BadStatusLine and is not a parent of
+# urllib.error.HTTPError.
+TRANSPORT_EXCEPTIONS = (
+    urllib.error.URLError,
+    OSError,
+    ssl.SSLError,
+    socket.timeout,
+    http.client.HTTPException,
+)
+# Truncated or non-JSON LWA/SP-API bodies. Caught only around body parse, not
+# as a blanket in main(), so an unrelated ValueError is not treated as keep/strip.
+JSON_BODY_EXCEPTIONS = (json.JSONDecodeError, ValueError)
 SCRIPT_RE = re.compile(
     r'(<script type="application/ld\+json">\s*)(\{.*?\})(\s*</script>)',
     re.S,
@@ -155,6 +172,12 @@ def lwa_access_token(client_id: str, client_secret: str, refresh_token: str) -> 
             err = None
         log(f"LWA HTTP {e.code} error={err or 'unknown'}")
         raise SystemExit(f"ERROR: LWA token exchange failed HTTP {e.code}")
+    except TRANSPORT_EXCEPTIONS as e:
+        log(f"LWA transport error type={type(e).__name__}")
+        raise SystemExit(f"ERROR: LWA token exchange failed: {type(e).__name__}")
+    except JSON_BODY_EXCEPTIONS as e:
+        log(f"LWA response JSON error type={type(e).__name__}")
+        raise SystemExit(f"ERROR: LWA token exchange failed: {type(e).__name__}")
     if "error" in payload:
         log(f"LWA HTTP {http} error={payload.get('error')}")
         raise SystemExit(f"ERROR: LWA token exchange failed: {payload.get('error')}")
@@ -193,6 +216,10 @@ def _get_item_offers_once(access_token: str, asin: str) -> tuple[int, dict | Non
         except Exception:
             err = None
         return e.code, {"_retry_after": retry_after}, err or f"HTTP {e.code}"
+    except TRANSPORT_EXCEPTIONS as e:
+        return 0, None, type(e).__name__
+    except JSON_BODY_EXCEPTIONS as e:
+        return 0, None, type(e).__name__
     except Exception as e:
         return 0, None, type(e).__name__
 
@@ -445,16 +472,30 @@ def patch_product_json_ld(html: str, offer: dict | None) -> str:
     return updated
 
 
+def price_valid_until_date(price_valid_until: str) -> str:
+    """schema.org Date: the last full calendar date in ET before the expiry instant.
+
+    An expiry of 2026-11-12 7:07 PM ET therefore becomes 2026-11-11, so the
+    page never claims validity past the 48h window.
+    """
+    until_dt = dt.datetime.fromisoformat(price_valid_until)
+    if until_dt.tzinfo is None:
+        until_dt = until_dt.replace(tzinfo=ET)
+    else:
+        until_dt = until_dt.astimezone(ET)
+    return (until_dt.date() - dt.timedelta(days=1)).isoformat()
+
+
 def offer_block(item: dict, price_valid_until: str) -> dict:
-    # JSON-LD date: calendar date of the expiry instant in ET, as in the plan example.
-    until_date = dt.datetime.fromisoformat(price_valid_until).astimezone(ET).date().isoformat()
+    # JSON-LD date is schema.org Date (date-only), floored to the last full
+    # ET calendar date before the real expiry timestamp.
     return {
         "@type": "Offer",
         "url": item["url"],
         "priceCurrency": "USD",
         "price": item["price"],
         "availability": item["availability"],
-        "priceValidUntil": until_date,
+        "priceValidUntil": price_valid_until_date(price_valid_until),
         "itemCondition": "https://schema.org/NewCondition",
     }
 
@@ -819,6 +860,35 @@ def apply_catalog(root: Path, catalog: dict) -> list[str]:
     return changed
 
 
+def keep_or_strip_after_fetch_failure(
+    root: Path, price_path: Path, existing: dict | None, now: dt.datetime
+) -> int:
+    """Catalog-level keep/strip when LWA or the fetch path fails before a usable result."""
+    if still_valid(existing, now):
+        log("FETCH FAILED; existing prices still within priceValidUntil; leaving site files unchanged")
+        log(ALERT_EXIT_2)
+        return 2
+    if existing:
+        log("FETCH FAILED; priceValidUntil has passed or is missing; stripping Offers and visible prices")
+        empty = {
+            slug: {
+                "asin": meta["asin"],
+                "url": amazon_url(meta["asin"]),
+                "status": "error",
+                "price": None,
+                "availability": None,
+                "reason": "refresh failed",
+            }
+            for slug, meta in ((m["slug"], m) for m in PRODUCTS)
+        }
+        catalog = write_catalog(price_path, empty, now, now)
+        changed = apply_catalog(root, catalog)
+        log("stripped files: " + (", ".join(changed) if changed else "(none)"))
+        return 3
+    log("FETCH FAILED; no existing price file; leaving pages without Offers")
+    return 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--root", default=".", help="sincerelycozy repo root")
@@ -879,29 +949,10 @@ def main() -> int:
         token = lwa_access_token(client_id, client_secret, refresh_token)
         results, transport_errors = fetch_all(token)
     except SystemExit:
-        if still_valid(existing, now):
-            log("FETCH FAILED; existing prices still within priceValidUntil; leaving site files unchanged")
-            log(ALERT_EXIT_2)
-            return 2
-        if existing:
-            log("FETCH FAILED; priceValidUntil has passed or is missing; stripping Offers and visible prices")
-            empty = {
-                slug: {
-                    "asin": meta["asin"],
-                    "url": amazon_url(meta["asin"]),
-                    "status": "error",
-                    "price": None,
-                    "availability": None,
-                    "reason": "refresh failed",
-                }
-                for slug, meta in ((m["slug"], m) for m in PRODUCTS)
-            }
-            catalog = write_catalog(price_path, empty, now, now)
-            changed = apply_catalog(root, catalog)
-            log("stripped files: " + (", ".join(changed) if changed else "(none)"))
-            return 3
-        log("FETCH FAILED; no existing price file; leaving pages without Offers")
-        raise
+        return keep_or_strip_after_fetch_failure(root, price_path, existing, now)
+    except TRANSPORT_EXCEPTIONS as e:
+        log(f"FETCH transport error type={type(e).__name__}")
+        return keep_or_strip_after_fetch_failure(root, price_path, existing, now)
 
     live_ok = sum(1 for item in results.values() if item["status"] == "ok")
     if live_ok == 0 and transport_errors == len(PRODUCTS):
