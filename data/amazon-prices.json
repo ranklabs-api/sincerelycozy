@@ -1,0 +1,57 @@
+{
+  "marketplace": "ATVPDKIKX0DER",
+  "currency": "USD",
+  "source": "getItemOffers",
+  "fetched_at": "2026-11-10T18:40:05.795043-05:00",
+  "priceValidUntil": "2026-11-12T18:40:05.795043-05:00",
+  "products": {
+    "rose-petal": {
+      "asin": "B08N2T6RCQ",
+      "url": "https://www.amazon.com/dp/B08N2T6RCQ",
+      "status": "ok",
+      "price": "29.99",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "baby-blue": {
+      "asin": "B08N1L9C2B",
+      "url": "https://www.amazon.com/dp/B08N1L9C2B",
+      "status": "ok",
+      "price": "29.99",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "cozy-teddy-bear": {
+      "asin": "B08N2P5KR8",
+      "url": "https://www.amazon.com/dp/B08N2P5KR8",
+      "status": "ok",
+      "price": "29.99",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "dreamy-clouds": {
+      "asin": "B08N2HPPVY",
+      "url": "https://www.amazon.com/dp/B08N2HPPVY",
+      "status": "ok",
+      "price": "29.99",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "little-butterfly": {
+      "asin": "B08PQ72WFD",
+      "url": "https://www.amazon.com/dp/B08PQ72WFD",
+      "status": "ok",
+      "price": "29.99",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    },
+    "pickaboo-bear": {
+      "asin": "B08N1LWVYJ",
+      "url": "https://www.amazon.com/dp/B08N1LWVYJ",
+      "status": "ok",
+      "price": "29.99",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock"
+    }
+  }
+}
