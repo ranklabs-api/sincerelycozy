@@ -7,6 +7,7 @@ git repo and delete it in tearDown. No fixture files, no installs, no worktrees.
 from __future__ import annotations
 
 import datetime as dt
+import http.client
 import importlib.util
 import io
 import json
@@ -717,10 +718,7 @@ class TestTransportKeepStrip(unittest.TestCase):
             files[rel] = (self.root / rel).read_text()
         return files
 
-    def _run_with_urlerror(self):
-        def boom(*args, **kwargs):
-            raise urllib.error.URLError("UNEXPECTED_EOF_WHILE_READING")
-
+    def _run_with_urlopen(self, opener):
         env = {
             "AMAZON_SPAPI_CLIENT_ID": "dummy-client-id",
             "AMAZON_SPAPI_CLIENT_SECRET": "dummy-secret",
@@ -735,28 +733,24 @@ class TestTransportKeepStrip(unittest.TestCase):
             os.environ.pop("AMAZON_SPAPI_CLIENT_ID_FILE", None)
             os.environ.pop("AMAZON_SPAPI_ENV_FILE", None)
             with (
-                mock.patch("urllib.request.urlopen", boom),
+                mock.patch("urllib.request.urlopen", opener),
                 mock.patch.object(sys, "argv", ["refresh-amazon-prices.py", "--root", str(self.root)]),
                 mock.patch.object(mod, "log", capture),
             ):
                 rc = mod.main()
         return rc, log_buf.getvalue()
 
-    def test_transport_error_keeps_files_when_window_open(self):
-        now = dt.datetime.now(tz=ET)
-        until = (now + dt.timedelta(hours=24)).isoformat()
-        self._seed(until)
-        before = self._snapshot()
-        rc, log = self._run_with_urlerror()
+    def _run_with_urlerror(self):
+        def boom(*args, **kwargs):
+            raise urllib.error.URLError("UNEXPECTED_EOF_WHILE_READING")
+        return self._run_with_urlopen(boom)
+
+    def _assert_kept(self, rc, log, before):
         self.assertEqual(rc, 2)
         self.assertIn("ALERT:SHEIK:price-refresh:exit=2", log)
         self.assertEqual(self._snapshot(), before)
 
-    def test_transport_error_strips_offers_when_window_expired(self):
-        now = dt.datetime.now(tz=ET)
-        until = (now - dt.timedelta(hours=1)).isoformat()
-        self._seed(until)
-        rc, log = self._run_with_urlerror()
+    def _assert_stripped(self, rc, log):
         self.assertEqual(rc, 3)
         self.assertIn("stripping Offers", log)
         self.assertNotIn("ALERT:SHEIK:price-refresh:exit=2", log)
@@ -772,6 +766,73 @@ class TestTransportKeepStrip(unittest.TestCase):
             self.assertNotIn("offers", product)
             self.assertNotIn("amazon-price:start", html)
             self.assertNotIn('class="product-price"', html)
+
+    def test_transport_error_keeps_files_when_window_open(self):
+        now = dt.datetime.now(tz=ET)
+        until = (now + dt.timedelta(hours=24)).isoformat()
+        self._seed(until)
+        before = self._snapshot()
+        rc, log = self._run_with_urlerror()
+        self._assert_kept(rc, log, before)
+
+    def test_transport_error_strips_offers_when_window_expired(self):
+        now = dt.datetime.now(tz=ET)
+        until = (now - dt.timedelta(hours=1)).isoformat()
+        self._seed(until)
+        rc, log = self._run_with_urlerror()
+        self._assert_stripped(rc, log)
+
+    def _incomplete_read_opener(self):
+        def boom(*args, **kwargs):
+            raise http.client.IncompleteRead(b"", 100)
+        return boom
+
+    def _truncated_json_opener(self):
+        class Resp:
+            status = 200
+            def read(self):
+                return b'{"access_token": "partial'
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                return False
+        def opener(*args, **kwargs):
+            return Resp()
+        return opener
+
+    def test_incomplete_read_keeps_files_when_window_open(self):
+        now = dt.datetime.now(tz=ET)
+        until = (now + dt.timedelta(hours=24)).isoformat()
+        self._seed(until)
+        before = self._snapshot()
+        rc, log = self._run_with_urlopen(self._incomplete_read_opener())
+        self._assert_kept(rc, log, before)
+        self.assertIn("IncompleteRead", log)
+
+    def test_incomplete_read_strips_offers_when_window_expired(self):
+        now = dt.datetime.now(tz=ET)
+        until = (now - dt.timedelta(hours=1)).isoformat()
+        self._seed(until)
+        rc, log = self._run_with_urlopen(self._incomplete_read_opener())
+        self._assert_stripped(rc, log)
+        self.assertIn("IncompleteRead", log)
+
+    def test_truncated_json_keeps_files_when_window_open(self):
+        now = dt.datetime.now(tz=ET)
+        until = (now + dt.timedelta(hours=24)).isoformat()
+        self._seed(until)
+        before = self._snapshot()
+        rc, log = self._run_with_urlopen(self._truncated_json_opener())
+        self._assert_kept(rc, log, before)
+        self.assertIn("JSON error", log)
+
+    def test_truncated_json_strips_offers_when_window_expired(self):
+        now = dt.datetime.now(tz=ET)
+        until = (now - dt.timedelta(hours=1)).isoformat()
+        self._seed(until)
+        rc, log = self._run_with_urlopen(self._truncated_json_opener())
+        self._assert_stripped(rc, log)
+        self.assertIn("JSON error", log)
 
 
 if __name__ == "__main__":

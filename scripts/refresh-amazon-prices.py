@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -69,7 +70,18 @@ PRICE_JSON = "data/amazon-prices.json"
 ALLOWED_PORCELAIN = " M"
 # Transport failures that must enter the keep/strip path, not an uncaught exit 1.
 # HTTPError is a URLError subclass; callers must handle HTTPError first.
-TRANSPORT_EXCEPTIONS = (urllib.error.URLError, OSError, ssl.SSLError, socket.timeout)
+# HTTPException covers IncompleteRead and BadStatusLine and is not a parent of
+# urllib.error.HTTPError.
+TRANSPORT_EXCEPTIONS = (
+    urllib.error.URLError,
+    OSError,
+    ssl.SSLError,
+    socket.timeout,
+    http.client.HTTPException,
+)
+# Truncated or non-JSON LWA/SP-API bodies. Caught only around body parse, not
+# as a blanket in main(), so an unrelated ValueError is not treated as keep/strip.
+JSON_BODY_EXCEPTIONS = (json.JSONDecodeError, ValueError)
 SCRIPT_RE = re.compile(
     r'(<script type="application/ld\+json">\s*)(\{.*?\})(\s*</script>)',
     re.S,
@@ -163,6 +175,9 @@ def lwa_access_token(client_id: str, client_secret: str, refresh_token: str) -> 
     except TRANSPORT_EXCEPTIONS as e:
         log(f"LWA transport error type={type(e).__name__}")
         raise SystemExit(f"ERROR: LWA token exchange failed: {type(e).__name__}")
+    except JSON_BODY_EXCEPTIONS as e:
+        log(f"LWA response JSON error type={type(e).__name__}")
+        raise SystemExit(f"ERROR: LWA token exchange failed: {type(e).__name__}")
     if "error" in payload:
         log(f"LWA HTTP {http} error={payload.get('error')}")
         raise SystemExit(f"ERROR: LWA token exchange failed: {payload.get('error')}")
@@ -202,6 +217,8 @@ def _get_item_offers_once(access_token: str, asin: str) -> tuple[int, dict | Non
             err = None
         return e.code, {"_retry_after": retry_after}, err or f"HTTP {e.code}"
     except TRANSPORT_EXCEPTIONS as e:
+        return 0, None, type(e).__name__
+    except JSON_BODY_EXCEPTIONS as e:
         return 0, None, type(e).__name__
     except Exception as e:
         return 0, None, type(e).__name__
