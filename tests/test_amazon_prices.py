@@ -8,13 +8,17 @@ from __future__ import annotations
 
 import datetime as dt
 import importlib.util
+import io
 import json
 import os
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import unittest
+import unittest.mock as mock
+import urllib.error
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -644,6 +648,130 @@ sys.exit(0)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("ALERT:SHEIK:price-refresh:push-failed", result.stderr)
         # origin is gone, so reset may not drop the local commit; still must exit nonzero
+
+
+class TestPriceValidUntilDate(unittest.TestCase):
+    def test_floors_to_last_full_et_date_before_expiry(self):
+        item = {
+            "url": "https://www.amazon.com/dp/B08N2T6RCQ",
+            "price": "29.99",
+            "availability": "https://schema.org/InStock",
+        }
+        offer = mod.offer_block(item, "2026-11-12T19:07:01.163435-05:00")
+        self.assertEqual(offer["priceValidUntil"], "2026-11-11")
+        self.assertEqual(
+            mod.price_valid_until_date("2026-11-12T19:07:01.163435-05:00"),
+            "2026-11-11",
+        )
+
+    def test_floors_et_midnight_to_previous_date(self):
+        self.assertEqual(mod.price_valid_until_date("2026-11-12T00:00:00-05:00"), "2026-11-11")
+
+    def test_floors_utc_instant_in_et(self):
+        # 2026-11-13 00:07:01 UTC = 2026-11-12 7:07:01 PM ET
+        self.assertEqual(mod.price_valid_until_date("2026-11-13T00:07:01+00:00"), "2026-11-11")
+
+
+class TestTransportKeepStrip(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp(prefix="sc-price-fetch-")
+        self.root = Path(self.tmpdir)
+        (self.root / "data").mkdir()
+        (self.root / "swaddles").mkdir()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _seed(self, until_iso: str):
+        products = {}
+        for meta in mod.PRODUCTS:
+            slug = meta["slug"]
+            (self.root / "swaddles" / f"{slug}.html").write_text(
+                MIN_HTML % {"name": slug, "slug": slug}
+            )
+            products[slug] = {
+                "asin": meta["asin"],
+                "url": f"https://www.amazon.com/dp/{meta['asin']}",
+                "status": "ok",
+                "price": "29.99",
+                "priceCurrency": "USD",
+                "availability": "https://schema.org/InStock",
+                "priceValidUntil": until_iso,
+            }
+        catalog = {
+            "marketplace": "ATVPDKIKX0DER",
+            "currency": "USD",
+            "source": "getItemOffers",
+            "fetched_at": until_iso,
+            "priceValidUntil": until_iso,
+            "products": products,
+        }
+        (self.root / "data" / "amazon-prices.json").write_text(json.dumps(catalog, indent=2) + "\n")
+        mod.apply_catalog(self.root, catalog)
+        return catalog
+
+    def _snapshot(self):
+        files = {"data/amazon-prices.json": (self.root / "data" / "amazon-prices.json").read_text()}
+        for meta in mod.PRODUCTS:
+            rel = f"swaddles/{meta['slug']}.html"
+            files[rel] = (self.root / rel).read_text()
+        return files
+
+    def _run_with_urlerror(self):
+        def boom(*args, **kwargs):
+            raise urllib.error.URLError("UNEXPECTED_EOF_WHILE_READING")
+
+        env = {
+            "AMAZON_SPAPI_CLIENT_ID": "dummy-client-id",
+            "AMAZON_SPAPI_CLIENT_SECRET": "dummy-secret",
+            "AMAZON_SPAPI_REFRESH_TOKEN": "dummy-refresh",
+        }
+        log_buf = io.StringIO()
+
+        def capture(msg):
+            log_buf.write(str(msg).rstrip() + "\n")
+
+        with mock.patch.dict(os.environ, env, clear=False):
+            os.environ.pop("AMAZON_SPAPI_CLIENT_ID_FILE", None)
+            os.environ.pop("AMAZON_SPAPI_ENV_FILE", None)
+            with (
+                mock.patch("urllib.request.urlopen", boom),
+                mock.patch.object(sys, "argv", ["refresh-amazon-prices.py", "--root", str(self.root)]),
+                mock.patch.object(mod, "log", capture),
+            ):
+                rc = mod.main()
+        return rc, log_buf.getvalue()
+
+    def test_transport_error_keeps_files_when_window_open(self):
+        now = dt.datetime.now(tz=ET)
+        until = (now + dt.timedelta(hours=24)).isoformat()
+        self._seed(until)
+        before = self._snapshot()
+        rc, log = self._run_with_urlerror()
+        self.assertEqual(rc, 2)
+        self.assertIn("ALERT:SHEIK:price-refresh:exit=2", log)
+        self.assertEqual(self._snapshot(), before)
+
+    def test_transport_error_strips_offers_when_window_expired(self):
+        now = dt.datetime.now(tz=ET)
+        until = (now - dt.timedelta(hours=1)).isoformat()
+        self._seed(until)
+        rc, log = self._run_with_urlerror()
+        self.assertEqual(rc, 3)
+        self.assertIn("stripping Offers", log)
+        self.assertNotIn("ALERT:SHEIK:price-refresh:exit=2", log)
+        catalog = json.loads((self.root / "data" / "amazon-prices.json").read_text())
+        for meta in mod.PRODUCTS:
+            item = catalog["products"][meta["slug"]]
+            self.assertEqual(item["status"], "error")
+            self.assertIsNone(item["price"])
+            html = (self.root / "swaddles" / f"{meta['slug']}.html").read_text()
+            product = json.loads(
+                html.split('<script type="application/ld+json">', 1)[1].split("</script>", 1)[0]
+            )
+            self.assertNotIn("offers", product)
+            self.assertNotIn("amazon-price:start", html)
+            self.assertNotIn('class="product-price"', html)
 
 
 if __name__ == "__main__":
