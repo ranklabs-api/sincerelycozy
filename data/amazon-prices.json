@@ -2,8 +2,8 @@
   "marketplace": "ATVPDKIKX0DER",
   "currency": "USD",
   "source": "getItemOffers",
-  "fetched_at": "2026-11-10T19:24:18.124760-05:00",
-  "priceValidUntil": "2026-11-12T19:24:18.124760-05:00",
+  "fetched_at": "2026-11-11T07:27:40.060292-05:00",
+  "priceValidUntil": "2026-11-13T07:27:40.060292-05:00",
   "products": {
     "rose-petal": {
       "asin": "B08N2T6RCQ",
@@ -12,7 +12,7 @@
       "price": "29.99",
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-11-12T19:24:18.124760-05:00"
+      "priceValidUntil": "2026-11-13T07:27:40.060292-05:00"
     },
     "baby-blue": {
       "asin": "B08N1L9C2B",
@@ -21,7 +21,7 @@
       "price": "29.99",
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-11-12T19:24:18.124760-05:00"
+      "priceValidUntil": "2026-11-13T07:27:40.060292-05:00"
     },
     "cozy-teddy-bear": {
       "asin": "B08N2P5KR8",
@@ -30,7 +30,7 @@
       "price": "29.99",
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-11-12T19:24:18.124760-05:00"
+      "priceValidUntil": "2026-11-13T07:27:40.060292-05:00"
     },
     "dreamy-clouds": {
       "asin": "B08N2HPPVY",
@@ -39,7 +39,7 @@
       "price": "29.99",
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-11-12T19:24:18.124760-05:00"
+      "priceValidUntil": "2026-11-13T07:27:40.060292-05:00"
     },
     "little-butterfly": {
       "asin": "B08PQ72WFD",
@@ -48,7 +48,7 @@
       "price": "29.99",
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-11-12T19:24:18.124760-05:00"
+      "priceValidUntil": "2026-11-13T07:27:40.060292-05:00"
     },
     "pickaboo-bear": {
       "asin": "B08N1LWVYJ",
@@ -57,7 +57,7 @@
       "price": "29.99",
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
-      "priceValidUntil": "2026-11-12T19:24:18.124760-05:00"
+      "priceValidUntil": "2026-11-13T07:27:40.060292-05:00"
     }
   }
 }
