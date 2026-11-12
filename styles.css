@@ -184,7 +184,7 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
 
 /* Preview: banner fades, rotating use photos, and the ways-to-use hub. */
 .carousel-slides { display: grid; }
-.carousel-slide { grid-area: 1 / 1; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .8s ease, visibility .8s; }
+.carousel-slide { grid-area: 1 / 1; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .45s ease, visibility .45s; }
 .carousel-slide.is-active { opacity: 1; visibility: visible; pointer-events: auto; }
 .multifunction-layout { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1.5rem, 4vw, 3rem); align-items: center; margin-top: 1.5rem; }
 .multifunction-photos { display: grid; overflow: hidden; border-radius: var(--radius); background: var(--cream); }
