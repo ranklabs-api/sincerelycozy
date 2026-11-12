@@ -162,6 +162,10 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
 .banner-copy { width: min(48%, 520px); }
 .banner-copy h2 { font-size: clamp(2rem, 3.6vw, 3.2rem); line-height: 1.13; }
 .banner-copy p:not(.tag) { max-width: 43ch; font-size: 1.1rem; line-height: 1.65; }
+.home-carousel { position: relative; }
+.home-carousel > .banner-copy { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; width: auto; max-width: none; padding: 3rem max(1rem, calc((100% - 1140px) / 2)); pointer-events: none; background: transparent; }
+.home-carousel > .banner-copy h1 { width: min(48%, 520px); }
+.home-carousel > .banner-copy .btn { pointer-events: auto; }
 .carousel-controls { display: flex; justify-content: center; align-items: center; gap: 1.25rem; padding: .85rem 1rem; background: var(--bg); }
 .carousel-controls button { font: inherit; font-weight: 800; color: var(--ink); background: white; border: 1px solid var(--ink); border-radius: 999px; min-height: 44px; min-width: 44px; cursor: pointer; }
 .carousel-dots { display: flex; gap: .5rem; }
@@ -169,7 +173,10 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
 .featured-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .featured-grid img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius); }
 .home-banner { margin-top: 1rem; }
-.founder-banner > img { object-position: center 35%; }
+.founder-banner { min-height: 0; justify-content: space-between; gap: clamp(1rem, 3vw, 2.5rem); padding-right: 0; }
+.founder-banner::before { display: none; }
+.founder-banner > img { position: static; width: min(48%, 540px); height: auto; object-fit: contain; object-position: center center; order: 2; align-self: center; z-index: 0; }
+.founder-banner .banner-copy { order: 1; flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
 .site-footer a { overflow-wrap: anywhere; }
 @media (max-width: 768px) {
   .carousel-slide, .home-banner { display: flex; flex-direction: column; align-items: stretch; padding: 0; min-height: 0; }
@@ -177,9 +184,14 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
   .carousel-slide::before, .home-banner::before { display: none; }
   .banner-copy { width: 100%; padding: 1.5rem; background: var(--bg); }
   .carousel-slide .banner-copy { min-height: 360px; }
+  .home-carousel { display: flex; flex-direction: column; }
+  .home-carousel > .banner-copy { position: static; width: 100%; padding: 1.5rem; pointer-events: auto; background: var(--bg); }
+  .home-carousel > .banner-copy h1 { width: auto; }
   .featured-grid { grid-template-columns: 1fr; }
   .featured-grid img { aspect-ratio: 4 / 3; }
   .home-main .reviews-grid { grid-template-columns: 1fr; }
+  .founder-banner { flex-direction: column; gap: 0; padding: 0; }
+  .founder-banner > img { width: 100%; height: auto; order: 0; object-fit: contain; object-position: center center; }
 }
 
 /* Preview: banner fades, rotating use photos, and the ways-to-use hub. */
