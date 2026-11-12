@@ -91,3 +91,37 @@
     pauseOnFocus: false
   });
 })();
+
+(() => {
+  const root = document.querySelector('#featured .featured-carousel');
+  if (!root) return;
+  const track = root.querySelector('.featured-track');
+  const prev = root.querySelector('.featured-prev');
+  const next = root.querySelector('.featured-next');
+  if (!track || !prev || !next) return;
+
+  function step() {
+    const card = track.querySelector('.featured-card');
+    if (!card) return 0;
+    const styles = window.getComputedStyle(track);
+    const gap = parseFloat(styles.columnGap || styles.gap) || 0;
+    return card.getBoundingClientRect().width + gap;
+  }
+
+  function updateNav() {
+    const max = track.scrollWidth - track.clientWidth;
+    const left = track.scrollLeft;
+    prev.disabled = left <= 4;
+    next.disabled = left >= max - 4;
+  }
+
+  prev.addEventListener('click', () => {
+    track.scrollBy({ left: -step(), behavior: 'smooth' });
+  });
+  next.addEventListener('click', () => {
+    track.scrollBy({ left: step(), behavior: 'smooth' });
+  });
+  track.addEventListener('scroll', updateNav, { passive: true });
+  window.addEventListener('resize', updateNav);
+  updateNav();
+})();
