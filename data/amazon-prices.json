@@ -58,6 +58,15 @@
       "priceCurrency": "USD",
       "availability": "https://schema.org/InStock",
       "priceValidUntil": "2026-11-18T07:11:56.893502-05:00"
+    },
+    "sweetheart-teddy": {
+      "asin": "B08PQ47VZ9",
+      "url": "https://www.amazon.com/dp/B08PQ47VZ9",
+      "status": "ok",
+      "price": "29.99",
+      "priceCurrency": "USD",
+      "availability": "https://schema.org/InStock",
+      "priceValidUntil": "2026-11-18T07:11:56.893502-05:00"
     }
   }
 }

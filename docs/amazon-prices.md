@@ -7,7 +7,7 @@ Sincerely Cozy product pages show a visible price and a Product `Offer` in JSON-
 `scripts/refresh-amazon-prices.sh` is the scheduler-ready refresh entrypoint. After an explicit GO, daily runs that should also commit use `scripts/refresh-amazon-prices-commit.sh` instead. Both run `scripts/refresh-amazon-prices.py`, which:
 
 1. Exchanges the LWA refresh token for an access token.
-2. Calls the Selling Partner API **read-only** endpoint `getItemOffers` for each of the six ASINs, marketplace `ATVPDKIKX0DER` (US), `ItemCondition=New`:
+2. Calls the Selling Partner API **read-only** endpoint `getItemOffers` for each of the seven ASINs, marketplace `ATVPDKIKX0DER` (US), `ItemCondition=New`:
 
    `GET https://sellingpartnerapi-na.amazon.com/products/pricing/v0/items/{ASIN}/offers?MarketplaceId=ATVPDKIKX0DER&ItemCondition=New`
 
@@ -56,8 +56,8 @@ If a Buy Box amount exists but availability is `OutOfStock` or `PreOrder`, the O
 
 1. `git fetch`es and requires a clean checkout on `main` that equals `origin/main`.
 2. Runs the refresh.
-3. Before staging, refuses any `git status --porcelain` entry other than an unstaged `M` on the seven allowlisted paths (`data/amazon-prices.json` and the six `swaddles/*.html` files). Deletions (`D`), renames (`R`), additions (`A`), untracked files (`??`), and any staged entries are rejected. It also refuses if `data/amazon-prices.json` is missing.
-4. Stages only those seven allowlisted paths.
+3. Before staging, refuses any `git status --porcelain` entry other than an unstaged `M` on the eight allowlisted paths (`data/amazon-prices.json` and the seven `swaddles/*.html` files). Deletions (`D`), renames (`R`), additions (`A`), untracked files (`??`), and any staged entries are rejected. It also refuses if `data/amazon-prices.json` is missing.
+4. Stages only those eight allowlisted paths.
 5. After `git add`, re-checks the index: `git diff --cached --name-status` must be `M` only, and only on allowlisted paths. Otherwise it runs `git reset --hard HEAD` to restore the worktree and exits 1.
 6. Also refuses if an HTML diff hunk falls outside the Product Offer JSON-LD and the `amazon-price` markers.
 7. On refresh exit 1, restores the working tree (`git restore` / `git checkout`) and does not commit.

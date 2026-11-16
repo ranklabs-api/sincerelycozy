@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Refresh Sincerely Cozy product Offer JSON-LD from live Amazon Buy Box prices.
 
-Read-only Selling Partner API (getItemOffers) for the six swaddle ASINs.
+Read-only Selling Partner API (getItemOffers) for the seven swaddle ASINs.
 Writes data/amazon-prices.json and patches swaddles/{slug}.html.
 
 Credentials are read at runtime, never logged or written to the repo:
@@ -55,6 +55,7 @@ PRODUCTS = (
     {"slug": "dreamy-clouds", "asin": "B08N2HPPVY"},
     {"slug": "little-butterfly", "asin": "B08PQ72WFD"},
     {"slug": "pickaboo-bear", "asin": "B08N1LWVYJ"},
+    {"slug": "sweetheart-teddy", "asin": "B08PQ47VZ9"},
 )
 
 PRICE_START = "<!-- amazon-price:start -->"

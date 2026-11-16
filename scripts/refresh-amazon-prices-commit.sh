@@ -89,7 +89,8 @@ git add -- \
   swaddles/cozy-teddy-bear.html \
   swaddles/dreamy-clouds.html \
   swaddles/little-butterfly.html \
-  swaddles/pickaboo-bear.html
+  swaddles/pickaboo-bear.html \
+  swaddles/sweetheart-teddy.html
 
 set +e
 python3 "$REFRESH_PY" --root "$ROOT" --check-cached-index
