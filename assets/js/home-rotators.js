@@ -85,7 +85,7 @@
   rotate({
     root: document.querySelector('#multifunction'),
     slideSelector: '.rotation-photo',
-    labelsSelector: '.multifunction-list [data-use]',
+    labelsSelector: '.multifunction-icons [data-use]',
     interval: 2500,
     pauseOnRootHover: false,
     pauseOnFocus: false
