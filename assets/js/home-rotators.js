@@ -77,7 +77,7 @@
   rotate({
     root: document.querySelector('#banners'),
     slideSelector: '.carousel-slide',
-    interval: 1000,
+    interval: 1500,
     pauseOnRootHover: true,
     pauseOnFocus: true
   });
