@@ -156,11 +156,11 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
 .home-main .btn { display: inline-block; margin-top: 1rem; }
 .home-main a:focus-visible, .home-main button:focus-visible { outline: 3px solid var(--ink); outline-offset: 5px; }
 .carousel-slide, .home-banner { position: relative; isolation: isolate; display: flex; align-items: center; min-height: 510px; padding: 3rem max(1rem, calc((100% - 1140px) / 2)); background: var(--cream); }
-.carousel-slide { min-height: 570px; }
+.carousel-slide { min-height: 570px; background: var(--bg); }
 .carousel-slide > img, .home-banner > img { position: absolute; inset: 0 0 0 auto; width: 52%; height: 100%; object-fit: cover; object-position: 35% center; z-index: -2; }
-.carousel-slide.slide-teddy-bow { background: var(--bg); }
+.carousel-slide::after { content: ''; position: absolute; inset: 0 0 0 auto; width: 52%; z-index: -1; pointer-events: none; background: linear-gradient(to bottom, var(--bg) 0%, rgba(255,253,247,0) 12%, rgba(255,253,247,0) 88%, var(--bg) 100%), linear-gradient(to right, var(--bg) 0%, var(--bg) 8%, rgba(255,253,247,0) 36%); }
 .carousel-slide.slide-teddy-bow > img { object-position: 50% center; }
-.carousel-slide.slide-teddy-bow::after { content: ''; position: absolute; inset: 0 0 0 auto; width: 52%; z-index: -1; pointer-events: none; background: linear-gradient(to bottom, var(--bg) 0%, rgba(255,253,247,0) 12%, rgba(255,253,247,0) 88%, var(--bg) 100%), linear-gradient(to right, var(--bg) 0%, var(--bg) 10%, rgba(255,253,247,0) 42%); }
+.carousel-slide.slide-cloud-bed::after { background: linear-gradient(to bottom, var(--bg) 0%, rgba(255,253,247,0) 12%, rgba(255,253,247,0) 88%, var(--bg) 100%), linear-gradient(to right, var(--bg) 0%, rgba(255,253,247,0) 18%); }
 .carousel-slide::before, .home-banner::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(255,253,247,.98), rgba(255,253,247,.98) 45%, rgba(255,253,247,0) 65%); }
 .banner-copy { width: min(48%, 520px); }
 .banner-copy h2 { font-size: clamp(2rem, 3.6vw, 3.2rem); line-height: 1.13; }
@@ -199,7 +199,7 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
   .carousel-slide, .home-banner { display: flex; flex-direction: column; align-items: stretch; padding: 0; min-height: 0; }
   .carousel-slide > img, .home-banner > img { position: static; width: 100%; height: 280px; object-position: center; }
   .carousel-slide::before, .home-banner::before { display: none; }
-  .carousel-slide.slide-teddy-bow::after { inset: 0 auto auto 0; width: 100%; height: 280px; z-index: 1; background: linear-gradient(to bottom, var(--bg) 0%, rgba(255,253,247,0) 14%, rgba(255,253,247,0) 86%, var(--bg) 100%), linear-gradient(to right, var(--bg) 0%, var(--bg) 8%, rgba(255,253,247,0) 28%, rgba(255,253,247,0) 88%, var(--bg) 100%); }
+  .carousel-slide::after { inset: 0 auto auto 0; width: 100%; height: 280px; z-index: 1; background: linear-gradient(to bottom, var(--bg) 0%, rgba(255,253,247,0) 14%, rgba(255,253,247,0) 86%, var(--bg) 100%), linear-gradient(to right, var(--bg) 0%, var(--bg) 8%, rgba(255,253,247,0) 28%, rgba(255,253,247,0) 88%, var(--bg) 100%); }
   .banner-copy { width: 100%; padding: 1.5rem; background: var(--bg); }
   .carousel-slide .banner-copy { min-height: 360px; }
   .home-carousel { display: flex; flex-direction: column; }
