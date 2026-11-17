@@ -158,6 +158,7 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
 .carousel-slide, .home-banner { position: relative; isolation: isolate; display: flex; align-items: center; min-height: 510px; padding: 3rem max(1rem, calc((100% - 1140px) / 2)); background: var(--cream); }
 .carousel-slide { min-height: 570px; }
 .carousel-slide > img, .home-banner > img { position: absolute; inset: 0 0 0 auto; width: 52%; height: 100%; object-fit: cover; object-position: 35% center; z-index: -2; }
+.carousel-slide.slide-teddy-bow > img { object-position: 50% center; }
 .carousel-slide::before, .home-banner::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(255,253,247,.98), rgba(255,253,247,.98) 45%, rgba(255,253,247,0) 65%); }
 .banner-copy { width: min(48%, 520px); }
 .banner-copy h2 { font-size: clamp(2rem, 3.6vw, 3.2rem); line-height: 1.13; }
