@@ -159,6 +159,7 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
 .carousel-slide { min-height: 570px; }
 .carousel-slide > img, .home-banner > img { position: absolute; inset: 0 0 0 auto; width: 52%; height: 100%; object-fit: cover; object-position: 35% center; z-index: -2; }
 .carousel-slide.slide-teddy-bow > img { object-position: 50% center; }
+.carousel-slide.slide-teddy-bow::after { content: ''; position: absolute; inset: 0 0 0 auto; width: 52%; z-index: -1; pointer-events: none; background: linear-gradient(to bottom, var(--bg) 0%, rgba(255,253,247,0) 12%, rgba(255,253,247,0) 88%, var(--bg) 100%), linear-gradient(to right, var(--bg) 0%, rgba(255,253,247,0) 20%); }
 .carousel-slide::before, .home-banner::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(255,253,247,.98), rgba(255,253,247,.98) 45%, rgba(255,253,247,0) 65%); }
 .banner-copy { width: min(48%, 520px); }
 .banner-copy h2 { font-size: clamp(2rem, 3.6vw, 3.2rem); line-height: 1.13; }
@@ -197,6 +198,7 @@ h1 { font-size: clamp(2rem, 4.3vw, 3.85rem); margin: .4rem 0 .9rem; }
   .carousel-slide, .home-banner { display: flex; flex-direction: column; align-items: stretch; padding: 0; min-height: 0; }
   .carousel-slide > img, .home-banner > img { position: static; width: 100%; height: 280px; object-position: center; }
   .carousel-slide::before, .home-banner::before { display: none; }
+  .carousel-slide.slide-teddy-bow::after { inset: 0 auto auto 0; width: 100%; height: 280px; z-index: 1; background: linear-gradient(to bottom, var(--bg) 0%, rgba(255,253,247,0) 14%, rgba(255,253,247,0) 86%, var(--bg) 100%), linear-gradient(to right, var(--bg) 0%, rgba(255,253,247,0) 10%, rgba(255,253,247,0) 90%, var(--bg) 100%); }
   .banner-copy { width: 100%; padding: 1.5rem; background: var(--bg); }
   .carousel-slide .banner-copy { min-height: 360px; }
   .home-carousel { display: flex; flex-direction: column; }
